@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -58,6 +58,9 @@ function App() {
   const [conversationHistory, setConversationHistory] = useState([])
   const [expandedCitations, setExpandedCitations] = useState({})
   const [storageStats, setStorageStats] = useState(null)
+  
+  // Ref for Q&A section to enable auto-scroll
+  const qaInputRef = useRef(null)
 
   // Fetch available documents and storage stats on mount
   useEffect(() => {
@@ -299,7 +302,18 @@ function App() {
   }
 
   const handleProceedToQuery = () => {
+    // Keep summary visible, just enable Q&A mode
     setShowSummary(false)
+    
+    // Scroll to Q&A input after a brief delay to ensure DOM is updated
+    setTimeout(() => {
+      if (qaInputRef.current) {
+        qaInputRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start'
+        })
+      }
+    }, 100)
   }
 
   const examples = [
@@ -318,6 +332,7 @@ function App() {
         <p className="mobile-text-sm" style={{ color: '#666', fontSize: '14px' }}>
           Multi-Agent RAG System • Claude Sonnet 4.6 • LangGraph
         </p>
+        {/* Debug button hidden - uncomment to enable debug panel
         <button
           onClick={() => setShowDebug(!showDebug)}
           className="mobile-text-sm"
@@ -335,6 +350,7 @@ function App() {
         >
           {showDebug ? '🐛 Debug ON' : '🐛 Debug OFF'}
         </button>
+        */}
       </header>
 
       {/* Main Content */}
@@ -350,144 +366,36 @@ function App() {
             /* UPLOAD STATE */
             <div className="mobile-full-width" style={{ maxWidth: '600px', margin: '0 auto' }}>
               <div className="card" style={{ textAlign: 'center', padding: 'clamp(24px, 5vw, 40px)' }}>
-                <div style={{ fontSize: 'clamp(36px, 8vw, 48px)', marginBottom: '20px' }}>📄</div>
-                <h2 style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: '600', marginBottom: '12px' }}>
-                  Upload Medical Document
+                <div style={{ fontSize: 'clamp(36px, 8vw, 48px)', marginBottom: '16px' }}>🏥</div>
+                <h2 style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: '600', marginBottom: '12px', color: '#111827' }}>
+                  AI-Powered Medical Report Analysis
                 </h2>
-                <p style={{ color: '#666', marginBottom: '12px' }}>
-                  Upload a PDF to start asking questions
+                <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '14px', lineHeight: '1.6', maxWidth: '500px', margin: '0 auto 24px' }}>
+                  Upload your medical report and ask questions in plain language. 
+                  Get instant insights powered by Claude AI and advanced RAG technology.
                 </p>
                 
-                {/* Storage Stats */}
-                {storageStats && (
-                  <div style={{
-                    marginBottom: '24px',
-                    padding: '12px 16px',
-                    background: storageStats.usage_percent >= 80 ? '#fef2f2' : '#f0fdf4',
-                    border: `1px solid ${storageStats.usage_percent >= 80 ? '#fecaca' : '#bbf7d0'}`,
-                    borderRadius: '8px',
-                    fontSize: '13px'
-                  }}>
-                    <div className="mobile-stack" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', gap: '8px' }}>
-                      <span className="mobile-text-sm" style={{ fontWeight: '600', color: storageStats.usage_percent >= 80 ? '#991b1b' : '#166534' }}>
-                        📊 Storage: {storageStats.document_count}/{storageStats.max_documents} documents
-                      </span>
-                      <span className="mobile-text-sm" style={{ color: storageStats.usage_percent >= 80 ? '#991b1b' : '#166534', whiteSpace: 'nowrap' }}>
-                        {storageStats.usage_percent}% used
-                      </span>
-                    </div>
-                    <div style={{ 
-                      width: '100%', 
-                      height: '6px', 
-                      background: '#e5e7eb', 
-                      borderRadius: '3px',
-                      overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        width: `${storageStats.usage_percent}%`,
-                        height: '100%',
-                        background: storageStats.usage_percent >= 80 ? '#dc2626' : '#10b981',
-                        transition: 'width 0.3s ease'
-                      }} />
-                    </div>
-                    {storageStats.usage_percent >= 80 && (
-                      <div style={{ marginTop: '8px', color: '#991b1b', fontSize: '12px' }}>
-                        ⚠️ Storage almost full! Delete old documents to upload new ones.
-                      </div>
-                    )}
-                    {storageStats.documents_remaining === 0 && (
-                      <div style={{ marginTop: '8px', color: '#991b1b', fontSize: '12px', fontWeight: '600' }}>
-                        🚫 Storage limit reached! Please delete documents before uploading.
-                      </div>
-                    )}
+                {/* Features */}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
+                  gap: '12px', 
+                  marginBottom: '24px',
+                  textAlign: 'left'
+                }}>
+                  <div style={{ padding: '12px', background: '#eff6ff', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '20px', marginBottom: '4px' }}>🔍</div>
+                    <div style={{ fontSize: '12px', fontWeight: '600', color: '#1e40af' }}>Smart Analysis</div>
                   </div>
-                )}
-
-                {/* Existing Documents Dropdown */}
-                {availableDocs.length > 0 && (
-                  <div style={{ marginBottom: '20px' }}>
-                    <button
-                      onClick={() => setShowDocDropdown(!showDocDropdown)}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        background: '#f3f4f6',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <span>� Recent Reports ({availableDocs.length})</span>
-                      <span>{showDocDropdown ? '▲' : '▼'}</span>
-                    </button>
-
-                    {showDocDropdown && (
-                      <div style={{
-                        marginTop: '8px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px',
-                        background: 'white',
-                        maxHeight: '200px',
-                        overflowY: 'auto'
-                      }}>
-                        {availableDocs.map((doc) => (
-                          <div
-                            key={doc.document_id}
-                            onClick={() => handleSelectExistingDoc(doc)}
-                            style={{
-                              padding: '12px 16px',
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              cursor: 'pointer',
-                              borderBottom: '1px solid #f3f4f6',
-                              transition: 'background 0.2s'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-                            onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
-                          >
-                            <span style={{ fontSize: '14px', flex: 1, textAlign: 'left' }}>
-                              📄 {doc.filename}
-                            </span>
-                            <button
-                              onClick={(e) => handleDeleteDoc(doc.document_id, e)}
-                              style={{
-                                padding: '4px 8px',
-                                background: '#fee2e2',
-                                color: '#dc2626',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                fontWeight: '600'
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = '#fecaca'}
-                              onMouseLeave={(e) => e.currentTarget.style.background = '#fee2e2'}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div style={{
-                      margin: '20px 0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px'
-                    }}>
-                      <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }}></div>
-                      <span style={{ color: '#9ca3af', fontSize: '14px', fontWeight: '500' }}>OR</span>
-                      <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }}></div>
-                    </div>
+                  <div style={{ padding: '12px', background: '#f0fdf4', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '20px', marginBottom: '4px' }}>�</div>
+                    <div style={{ fontSize: '12px', fontWeight: '600', color: '#166534' }}>Ask Questions</div>
                   </div>
-                )}
+                  <div style={{ padding: '12px', background: '#fef3c7', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '20px', marginBottom: '4px' }}>📊</div>
+                    <div style={{ fontSize: '12px', fontWeight: '600', color: '#92400e' }}>Health Insights</div>
+                  </div>
+                </div>
 
                 <input
                   type="file"
@@ -630,15 +538,18 @@ function App() {
                   </div>
                 )}
 
-                <div style={{ marginTop: '32px', fontSize: '13px', color: '#999' }}>
-                  <p>Supported: PDF files</p>
-                  <p style={{ marginTop: '4px' }}>Max size: 10MB</p>
+                <div style={{ marginTop: '24px', padding: '12px', background: '#f9fafb', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '12px', color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                    <span>✅ PDF files only</span>
+                    <span>📏 Max 10MB</span>
+                    <span>🔒 Secure & Private</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-          ) : showSummary && docSummary ? (
-            /* SUMMARY STATE - New Layout */
+          ) : uploadedDoc && docSummary ? (
+            /* SUMMARY + Q&A STATE - Combined Layout */
             <div className="mobile-full-width" style={{ 
               maxWidth: '900px', 
               margin: '0 auto',
@@ -647,7 +558,7 @@ function App() {
               flexDirection: 'column',
               height: 'calc(100vh - 200px)'
             }}>
-              {/* Scrollable Summary Content */}
+              {/* Scrollable Content Area - Summary + Q&A */}
               <div style={{
                 flex: 1,
                 overflowY: 'auto',
@@ -861,56 +772,208 @@ function App() {
                     <span>🤖 {docSummary.stats.modelUsed}</span>
                   </div>
                 </div>
+
+                {/* Q&A Section - Shows after clicking Start Asking Questions */}
+                {!showSummary && (
+                  <div className="card" style={{ padding: '24px', marginTop: '24px' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      marginBottom: '20px',
+                      paddingBottom: '16px',
+                      borderBottom: '2px solid #e5e7eb'
+                    }}>
+                      <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', margin: 0 }}>
+                        💬 Ask Questions
+                      </h3>
+                      <button
+                        onClick={handleClearDocument}
+                        style={{
+                          padding: '6px 12px',
+                          background: '#fee2e2',
+                          color: '#dc2626',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        ✕ Clear & Upload New
+                      </button>
+                    </div>
+
+                    {/* Conversation History */}
+                    {conversationHistory.length > 0 && (
+                      <div style={{ marginBottom: '20px' }}>
+                        {conversationHistory.map((item, idx) => (
+                          <div key={idx} style={{ marginBottom: '24px' }}>
+                            {/* Question */}
+                            <div style={{
+                              padding: '12px 16px',
+                              background: '#eff6ff',
+                              borderLeft: '4px solid #3b82f6',
+                              borderRadius: '6px',
+                              marginBottom: '12px'
+                            }}>
+                              <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>You asked:</div>
+                              <div style={{ fontSize: '14px', color: '#1e40af', fontWeight: '500' }}>{item.question}</div>
+                            </div>
+
+                            {/* Answer */}
+                            <div style={{
+                              padding: '16px',
+                              background: '#f9fafb',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '6px'
+                            }}>
+                              <div style={{ fontSize: '14px', color: '#374151', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                                {item.answer}
+                              </div>
+                              {item.citations && item.citations.length > 0 && (
+                                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
+                                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>📚 Sources:</div>
+                                  {item.citations.map((citation, i) => (
+                                    <div key={i} style={{
+                                      fontSize: '12px',
+                                      color: '#6b7280',
+                                      marginBottom: '4px'
+                                    }}>
+                                      • Page {citation.page}: {citation.text.substring(0, 100)}...
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {conversationHistory.length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '40px 20px', color: '#9ca3af' }}>
+                        <div style={{ fontSize: '48px', marginBottom: '12px' }}>💬</div>
+                        <div style={{ fontSize: '14px' }}>Ask your first question about the report below</div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Fixed Action Buttons at Bottom */}
-              <div className="card" style={{
+              {/* Fixed Action/Input Area at Bottom */}
+              <div className="card mobile-padding-sm" style={{
                 padding: '20px',
                 background: 'white',
                 borderTop: '2px solid #e5e7eb',
                 flexShrink: 0
               }}>
-                <div className="mobile-stack" style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                  <button
-                    onClick={handleProceedToQuery}
-                    className="mobile-full-width"
-                    style={{
-                      padding: '14px 40px',
-                      background: 'linear-gradient(135deg, #0284c7, #0369a1)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: 'clamp(14px, 3vw, 16px)',
-                      fontWeight: '600',
-                      boxShadow: '0 4px 6px rgba(2, 132, 199, 0.3)',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
-                    onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
-                  >
-                    🚀 Start Asking Questions
-                  </button>
-                  <button
-                    onClick={handleClearDocument}
-                    className="mobile-full-width"
-                    style={{
-                      padding: '14px 24px',
-                      background: '#f3f4f6',
-                      color: '#374151',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: 'clamp(13px, 3vw, 14px)',
-                      fontWeight: '500',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseOver={(e) => { e.target.style.background = '#e5e7eb'; }}
-                    onMouseOut={(e) => { e.target.style.background = '#f3f4f6'; }}
-                  >
-                    ✕ Upload Different PDF
-                  </button>
-                </div>
+                {showSummary ? (
+                  /* Show Start Button when summary is visible */
+                  <div className="mobile-stack" style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                    <button
+                      onClick={handleProceedToQuery}
+                      className="mobile-full-width"
+                      style={{
+                        padding: '14px 40px',
+                        background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: 'clamp(14px, 3vw, 16px)',
+                        fontWeight: '600',
+                        boxShadow: '0 4px 6px rgba(2, 132, 199, 0.3)',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+                      onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+                    >
+                      🚀 Start Asking Questions
+                    </button>
+                    <button
+                      onClick={handleClearDocument}
+                      className="mobile-full-width"
+                      style={{
+                        padding: '14px 24px',
+                        background: '#f3f4f6',
+                        color: '#374151',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: 'clamp(13px, 3vw, 14px)',
+                        fontWeight: '500',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseOver={(e) => { e.target.style.background = '#e5e7eb'; }}
+                      onMouseOut={(e) => { e.target.style.background = '#f3f4f6'; }}
+                    >
+                      ✕ Upload Different PDF
+                    </button>
+                  </div>
+                ) : (
+                  /* Show Q&A Input when in question mode */
+                  <div ref={qaInputRef}>
+                    <div className="mobile-stack" style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
+                      <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && !loading && query.trim() && handleQuery()}
+                        placeholder="Ask about your medical report..."
+                        className="mobile-full-width mobile-text-sm"
+                        style={{
+                          flex: 1,
+                          padding: '12px 16px',
+                          border: '2px solid #e5e7eb',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          outline: 'none'
+                        }}
+                      />
+                      <button
+                        onClick={handleQuery}
+                        disabled={loading || !query.trim()}
+                        style={{
+                          padding: '12px 24px',
+                          background: loading || !query.trim() ? '#d1d5db' : '#0284c7',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: loading || !query.trim() ? 'not-allowed' : 'pointer',
+                          fontSize: 'clamp(14px, 3vw, 16px)',
+                          fontWeight: '500',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {loading ? '🔄' : '🚀'}
+                      </button>
+                    </div>
+                    
+                    {/* Quick Examples */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      <span style={{ fontSize: '11px', color: '#9ca3af', alignSelf: 'center' }}>Quick:</span>
+                      {examples.map((ex, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setQuery(ex)}
+                          style={{
+                            padding: '4px 8px',
+                            fontSize: '11px',
+                            background: '#f3f4f6',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            color: '#6b7280'
+                          }}
+                        >
+                          {ex}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1108,8 +1171,10 @@ function App() {
                         </button>
                       ))}
                     </div>
-                    
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'end' }}>
+                  </div>
+
+                  {error && (
+                    <div style={{
                       padding: '10px 12px',
                       background: '#fef2f2',
                       border: '1px solid #fecaca',
