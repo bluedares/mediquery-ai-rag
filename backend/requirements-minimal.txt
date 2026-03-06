@@ -4,11 +4,11 @@
 # ============================================================================
 # Web Framework
 # ============================================================================
-fastapi==0.115.0
-uvicorn[standard]==0.32.0
-pydantic==2.9.0
-pydantic-settings==2.5.0
-python-multipart==0.0.12
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-multipart==0.0.18
 
 # ============================================================================
 # Vector Database - ChromaDB (includes embeddings)
