@@ -1,5 +1,5 @@
-# Multi-stage build for MediQuery AI Backend
-FROM python:3.11-slim as builder
+# Single-stage build for MediQuery AI Backend
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
@@ -11,31 +11,17 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY backend/requirements-minimal.txt .
+COPY backend/requirements-minimal.txt ./backend/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements-minimal.txt
-
-# Production stage
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install runtime dependencies only
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+    pip install --no-cache-dir -r backend/requirements-minimal.txt
 
 # Copy application code
 COPY backend/ /app/backend/
 
 # Set Python path
-ENV PYTHONPATH=/app:$PYTHONPATH
+ENV PYTHONPATH=/app
 
 # Create directory for ChromaDB persistence
 RUN mkdir -p /app/chroma_data
@@ -44,5 +30,4 @@ RUN mkdir -p /app/chroma_data
 EXPOSE 8000
 
 # Run the application
-# Use shell form to allow environment variable expansion
 CMD uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}
