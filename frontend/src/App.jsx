@@ -595,180 +595,272 @@ function App() {
             </div>
 
           ) : showSummary && docSummary ? (
-            /* SUMMARY STATE */
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <div className="card" style={{ padding: '40px' }}>
-                <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
-                  <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '8px' }}>
-                    Document Processed Successfully!
-                  </h2>
-                  <p style={{ color: '#666', fontSize: '14px' }}>{docSummary.title}</p>
-                </div>
-
-                <div style={{ marginBottom: '32px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>
-                    📊 Report Summary
-                  </h3>
-                  {/* Removed pages/chunks display - now in debug panel only */}
-
-                  {/* Health Indicators */}
-                  <div style={{
-                    padding: '20px', background: '#f9fafb',
-                    border: '1px solid #e5e7eb', borderRadius: '8px', marginBottom: '16px'
-                  }}>
-                    <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>
-                      🏥 Health Indicators
-                    </h4>
-                    
-                    {docSummary.healthIndicators && docSummary.healthIndicators.length > 0 ? (
-                      <>
-                        {docSummary.healthIndicators.map((indicator, i) => (
-                          <div key={i} style={{ marginBottom: '16px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                              <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                                {indicator.name}
-                              </span>
-                              <span style={{ 
-                                fontSize: '14px', 
-                                fontWeight: '700', 
-                                color: indicator.color,
-                                padding: '2px 8px',
-                                background: indicator.color + '20',
-                                borderRadius: '4px'
-                              }}>
-                                {indicator.value}%
-                              </span>
-                            </div>
-                            <div style={{
-                              width: '100%', height: '10px', background: '#e5e7eb',
-                              borderRadius: '5px', overflow: 'hidden', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)'
-                            }}>
-                              <div style={{
-                                width: `${indicator.value}%`, height: '100%',
-                                background: `linear-gradient(90deg, ${indicator.color}, ${indicator.color}dd)`,
-                                transition: 'width 0.5s ease-out',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                              }} />
-                            </div>
-                            <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                              Status: <span style={{ fontWeight: '600', color: indicator.color }}>
-                                {indicator.status.charAt(0).toUpperCase() + indicator.status.slice(1)}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                        
-                        <div style={{
-                          marginTop: '20px', padding: '16px', 
-                          background: `linear-gradient(135deg, ${docSummary.overallColor}15, ${docSummary.overallColor}05)`,
-                          border: `2px solid ${docSummary.overallColor}`,
-                          borderRadius: '8px', textAlign: 'center'
-                        }}>
-                          <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                            Overall Health Score
-                          </div>
-                          <div style={{ fontSize: '24px', fontWeight: '700', color: docSummary.overallColor }}>
-                            {docSummary.overallScore}
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <div style={{
-                        padding: '24px', textAlign: 'center',
-                        background: '#fef3c7', border: '1px solid #fbbf24',
-                        borderRadius: '8px'
-                      }}>
-                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>📋</div>
-                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#92400e', marginBottom: '4px' }}>
-                          No Health Metrics Found
-                        </div>
-                        <div style={{ fontSize: '13px', color: '#78350f' }}>
-                          This document doesn't contain standard health indicators like blood pressure, glucose, cholesterol, etc.
-                        </div>
-                        {docSummary.overallScore && (
-                          <div style={{
-                            marginTop: '12px', padding: '12px',
-                            background: 'white', borderRadius: '6px'
-                          }}>
-                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Document Status: </span>
-                            <span style={{ fontSize: '16px', fontWeight: '600', color: docSummary.overallColor }}>
-                              {docSummary.overallScore}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+            /* SUMMARY STATE - New Layout */
+            <div style={{ 
+              maxWidth: '900px', 
+              margin: '0 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              height: 'calc(100vh - 200px)'
+            }}>
+              {/* Scrollable Summary Content */}
+              <div style={{
+                flex: 1,
+                overflowY: 'auto',
+                marginBottom: '16px',
+                paddingRight: '8px'
+              }}>
+                <div className="card" style={{ padding: '32px' }}>
+                  {/* Header */}
+                  <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                    <div style={{ fontSize: '48px', marginBottom: '12px' }}>✅</div>
+                    <h2 style={{ fontSize: '22px', fontWeight: '600', marginBottom: '6px', color: '#111827' }}>
+                      Document Processed Successfully!
+                    </h2>
+                    <p style={{ color: '#6b7280', fontSize: '14px' }}>{docSummary.title}</p>
                   </div>
 
-                  {/* Key Findings */}
-                  {docSummary.keyPoints && docSummary.keyPoints.length > 0 ? (
+                  {/* Overall Health Score - Circular Progress */}
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    marginBottom: '32px'
+                  }}>
                     <div style={{
-                      padding: '20px', background: '#eff6ff',
-                      border: '1px solid #bfdbfe', borderRadius: '8px', marginBottom: '16px'
+                      position: 'relative',
+                      width: '160px',
+                      height: '160px'
                     }}>
-                      <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: '#1e40af' }}>
-                        🔍 Key Findings
-                      </h4>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {docSummary.keyPoints.map((point, i) => (
-                          <div key={i} style={{
-                            display: 'flex', alignItems: 'start', gap: '12px',
-                            padding: '12px', background: 'white',
-                            borderRadius: '6px', border: '1px solid #dbeafe'
-                          }}>
-                            <div style={{
-                              minWidth: '24px', height: '24px',
-                              background: '#3b82f6', color: 'white',
-                              borderRadius: '50%', display: 'flex',
-                              alignItems: 'center', justifyContent: 'center',
-                              fontSize: '12px', fontWeight: '600'
-                            }}>
-                              {i + 1}
-                            </div>
-                            <div style={{ fontSize: '14px', color: '#1e40af', lineHeight: '1.5' }}>
-                              {point}
-                            </div>
-                          </div>
-                        ))}
+                      {/* Circular Progress SVG */}
+                      <svg width="160" height="160" style={{ transform: 'rotate(-90deg)' }}>
+                        {/* Background circle */}
+                        <circle
+                          cx="80"
+                          cy="80"
+                          r="70"
+                          fill="none"
+                          stroke="#e5e7eb"
+                          strokeWidth="12"
+                        />
+                        {/* Progress circle */}
+                        <circle
+                          cx="80"
+                          cy="80"
+                          r="70"
+                          fill="none"
+                          stroke={docSummary.overallColor || '#10b981'}
+                          strokeWidth="12"
+                          strokeLinecap="round"
+                          strokeDasharray={`${2 * Math.PI * 70}`}
+                          strokeDashoffset={`${2 * Math.PI * 70 * (1 - 0.75)}`}
+                          style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                        />
+                      </svg>
+                      {/* Center text */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        textAlign: 'center'
+                      }}>
+                        <div style={{ fontSize: '28px', fontWeight: '700', color: docSummary.overallColor || '#10b981' }}>
+                          {docSummary.overallScore || 'N/A'}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px' }}>
+                          Overall Score
+                        </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Critical Health Indicators Only */}
+                  {docSummary.healthIndicators && docSummary.healthIndicators.length > 0 ? (
+                    <div style={{
+                      padding: '20px',
+                      background: '#f9fafb',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      marginBottom: '20px'
+                    }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>
+                        ⚠️ Critical Health Indicators
+                      </h4>
+                      
+                      {/* Filter and show only abnormal indicators */}
+                      {(() => {
+                        const criticalIndicators = docSummary.healthIndicators.filter(
+                          ind => ind.status !== 'good' && ind.status !== 'normal'
+                        );
+                        
+                        if (criticalIndicators.length === 0) {
+                          return (
+                            <div style={{
+                              padding: '20px',
+                              textAlign: 'center',
+                              background: '#d1fae5',
+                              borderRadius: '6px'
+                            }}>
+                              <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
+                              <div style={{ fontSize: '14px', fontWeight: '600', color: '#065f46' }}>
+                                All indicators within normal range
+                              </div>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                            {criticalIndicators.map((indicator, i) => (
+                              <div key={i} style={{
+                                padding: '16px',
+                                background: 'white',
+                                border: `2px solid ${indicator.color}`,
+                                borderRadius: '8px'
+                              }}>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
+                                  {indicator.name}
+                                </div>
+                                <div style={{ fontSize: '24px', fontWeight: '700', color: indicator.color, marginBottom: '4px' }}>
+                                  {indicator.value}%
+                                </div>
+                                <div style={{
+                                  fontSize: '11px',
+                                  fontWeight: '600',
+                                  color: indicator.color,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px'
+                                }}>
+                                  {indicator.status}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ) : (
                     <div style={{
-                      padding: '20px', background: '#f3f4f6',
-                      border: '1px solid #d1d5db', borderRadius: '8px', marginBottom: '16px',
-                      textAlign: 'center'
+                      padding: '24px', textAlign: 'center',
+                      background: '#fef3c7', border: '1px solid #fbbf24',
+                      borderRadius: '8px'
                     }}>
-                      <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                        📝 No key findings extracted from this document
+                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>📋</div>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#92400e', marginBottom: '4px' }}>
+                        No Health Metrics Found
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#78350f' }}>
+                        This document doesn't contain standard health indicators like blood pressure, glucose, cholesterol, etc.
+                      </div>
+                      {docSummary.overallScore && (
+                        <div style={{
+                          marginTop: '12px', padding: '12px',
+                          background: 'white', borderRadius: '6px'
+                        }}>
+                          <span style={{ fontSize: '13px', color: '#6b7280' }}>Document Status: </span>
+                          <span style={{ fontSize: '16px', fontWeight: '600', color: docSummary.overallColor }}>
+                            {docSummary.overallScore}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Key Findings - Compact */}
+                  {docSummary.keyPoints && docSummary.keyPoints.length > 0 && (
+                    <div style={{
+                      padding: '20px',
+                      background: '#eff6ff',
+                      border: '1px solid #bfdbfe',
+                      borderRadius: '8px',
+                      marginBottom: '16px'
+                    }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', color: '#1e40af' }}>
+                        🔍 Key Findings
+                      </h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {docSummary.keyPoints.slice(0, 4).map((point, i) => (
+                          <div key={i} style={{
+                            display: 'flex',
+                            alignItems: 'start',
+                            gap: '10px',
+                            fontSize: '13px',
+                            color: '#1e40af',
+                            lineHeight: '1.5'
+                          }}>
+                            <span style={{ fontWeight: '700', minWidth: '20px' }}>•</span>
+                            <span>{point}</span>
+                          </div>
+                        ))}
+                        {docSummary.keyPoints.length > 4 && (
+                          <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', fontStyle: 'italic' }}>
+                            +{docSummary.keyPoints.length - 4} more findings...
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
 
-                  <div style={{ fontSize: '12px', color: '#6b7280', padding: '12px', background: '#f9fafb', borderRadius: '6px' }}>
-                    <div><strong>Document ID:</strong> {docSummary.stats.documentId}</div>
-                    <div style={{ marginTop: '4px' }}><strong>AI Model:</strong> {docSummary.stats.modelUsed}</div>
+                  {/* Document Metadata - Compact */}
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#9ca3af',
+                    padding: '12px',
+                    background: '#f9fafb',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '8px'
+                  }}>
+                    <span>📄 {uploadedDoc?.pages || 0} pages • {uploadedDoc?.chunks || 0} chunks</span>
+                    <span>🤖 {docSummary.stats.modelUsed}</span>
                   </div>
                 </div>
+              </div>
 
+              {/* Fixed Action Buttons at Bottom */}
+              <div className="card" style={{
+                padding: '20px',
+                background: 'white',
+                borderTop: '2px solid #e5e7eb',
+                flexShrink: 0
+              }}>
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                   <button
                     onClick={handleProceedToQuery}
                     style={{
-                      padding: '12px 32px', background: '#0284c7', color: 'white',
-                      border: 'none', borderRadius: '8px', cursor: 'pointer',
-                      fontSize: '16px', fontWeight: '500'
+                      padding: '14px 40px',
+                      background: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      boxShadow: '0 4px 6px rgba(2, 132, 199, 0.3)',
+                      transition: 'all 0.2s'
                     }}
+                    onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+                    onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
                   >
                     🚀 Start Asking Questions
                   </button>
                   <button
                     onClick={handleClearDocument}
                     style={{
-                      padding: '12px 24px', background: '#e5e7eb', color: '#374151',
-                      border: 'none', borderRadius: '8px', cursor: 'pointer',
-                      fontSize: '14px', fontWeight: '500'
+                      padding: '14px 24px',
+                      background: '#f3f4f6',
+                      color: '#374151',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      transition: 'all 0.2s'
                     }}
+                    onMouseOver={(e) => { e.target.style.background = '#e5e7eb'; }}
+                    onMouseOut={(e) => { e.target.style.background = '#f3f4f6'; }}
                   >
                     ✕ Upload Different PDF
                   </button>
