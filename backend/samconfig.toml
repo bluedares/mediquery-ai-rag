@@ -1,0 +1,16 @@
+version = 0.1
+
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "mediquery-stack"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket"
+s3_prefix = "mediquery"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = ""
+confirm_changeset = true
+
+[default.build]
+[default.build.parameters]
+use_container = true

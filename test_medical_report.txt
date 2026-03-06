@@ -1,0 +1,46 @@
+PATIENT MEDICAL REPORT
+Date: March 6, 2026
+Patient ID: 12345
+
+LABORATORY RESULTS:
+
+Blood Glucose: 145 mg/dL (Fasting)
+Reference Range: 70-100 mg/dL
+Status: ELEVATED - Indicates pre-diabetic condition
+
+Total Cholesterol: 240 mg/dL
+LDL Cholesterol: 160 mg/dL
+HDL Cholesterol: 45 mg/dL
+Reference Range: Total <200 mg/dL, LDL <100 mg/dL, HDL >40 mg/dL
+Status: HIGH - Requires dietary modification and possible medication
+
+Blood Pressure: 145/95 mmHg
+Reference Range: <120/80 mmHg
+Status: STAGE 2 HYPERTENSION - Immediate medical attention required
+
+Heart Rate: 88 bpm
+Reference Range: 60-100 bpm
+Status: NORMAL
+
+Body Mass Index (BMI): 28.5
+Reference Range: 18.5-24.9
+Status: OVERWEIGHT - Weight management recommended
+
+Hemoglobin A1C: 6.2%
+Reference Range: <5.7%
+Status: PRE-DIABETIC - Lifestyle changes needed
+
+CLINICAL FINDINGS:
+1. Patient shows signs of metabolic syndrome with elevated glucose, cholesterol, and blood pressure
+2. BMI indicates overweight status contributing to cardiovascular risk
+3. Pre-diabetic HbA1c levels require immediate lifestyle intervention
+4. High LDL cholesterol increases risk of atherosclerosis
+5. Stage 2 hypertension requires medication and monitoring
+
+RECOMMENDATIONS:
+- Immediate consultation with cardiologist
+- Start antihypertensive medication
+- Dietary modifications: low sodium, low sugar, low saturated fat
+- Exercise program: 30 minutes daily moderate activity
+- Follow-up in 4 weeks for reassessment
+- Consider statin therapy for cholesterol management

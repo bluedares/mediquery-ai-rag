@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: MediQuery AI - Serverless RAG Application
+
+Globals:
+  Function:
+    Timeout: 300
+    MemorySize: 2048
+    Runtime: python3.9
+    Environment:
+      Variables:
+        DEBUG_MODE: true
+        TRACE_AGENTS: true
+        TRACE_LLM_CALLS: true
+        AWS_REGION: us-east-1
+
+Resources:
+  # Lambda Function
+  MediQueryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: mediquery-api
+      CodeUri: .
+      Handler: lambda_handler.handler
+      Description: MediQuery AI Multi-Agent RAG API
+      Policies:
+        - AmazonBedrockFullAccess
+        - AmazonS3FullAccess
+        - Statement:
+            - Effect: Allow
+              Action:
+                - es:*
+              Resource: '*'
+      Events:
+        ApiRoot:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+        ApiProxy:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !Ref DocumentBucket
+          OPENSEARCH_ENDPOINT: !GetAtt OpenSearchDomain.DomainEndpoint
+
+  # S3 Bucket for Documents
+  DocumentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'mediquery-documents-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+            AllowedOrigins:
+              - '*'
+            MaxAge: 3000
+
+  # OpenSearch Domain (Optional - can use mock mode)
+  OpenSearchDomain:
+    Type: AWS::OpenSearchService::Domain
+    Properties:
+      DomainName: mediquery-search
+      EngineVersion: 'OpenSearch_2.11'
+      ClusterConfig:
+        InstanceType: t3.small.search
+        InstanceCount: 1
+      EBSOptions:
+        EBSEnabled: true
+        VolumeSize: 10
+        VolumeType: gp3
+      AccessPolicies:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: '*'
+            Action: 'es:*'
+            Resource: !Sub 'arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/mediquery-search/*'
+
+  # CloudWatch Log Group
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/mediquery-api
+      RetentionInDays: 7
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'
+  
+  DocumentBucket:
+    Description: S3 bucket for documents
+    Value: !Ref DocumentBucket
+  
+  OpenSearchEndpoint:
+    Description: OpenSearch domain endpoint
+    Value: !GetAtt OpenSearchDomain.DomainEndpoint
+  
+  FunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt MediQueryFunction.Arn
