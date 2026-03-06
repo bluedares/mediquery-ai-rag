@@ -22,6 +22,24 @@ except ImportError:
 
 router = APIRouter()
 
+# Document storage limits for free tier
+MAX_DOCUMENTS = 50  # Render.com free tier limit
+
+
+async def get_document_count() -> int:
+    """Get total number of documents stored in ChromaDB"""
+    if settings.use_chromadb and chromadb_available:
+        try:
+            chromadb_svc = get_chromadb_service()
+            collections = chromadb_svc.client.list_collections()
+            # Each document has its own collection: medical-docs-{document_id}
+            doc_collections = [c for c in collections if c.name.startswith('medical-docs-')]
+            return len(doc_collections)
+        except Exception as e:
+            logger.warning(f"Failed to get document count: {e}")
+            return 0
+    return 0
+
 
 @router.post("/upload", response_model=UploadResponse)
 async def upload_document(
@@ -54,12 +72,45 @@ async def upload_document(
         content_type=file.content_type
     )
     
+    # Check document limit (free tier: 50 documents)
+    current_count = await get_document_count()
+    if current_count >= MAX_DOCUMENTS:
+        logger.warning(
+            f"⚠️  Document limit reached: {current_count}/{MAX_DOCUMENTS}",
+            request_id=request_id
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "message": f"Storage limit reached ({MAX_DOCUMENTS} documents). Please delete old documents before uploading new ones.",
+                "current_count": current_count,
+                "max_count": MAX_DOCUMENTS,
+                "documents_remaining": 0
+            }
+        )
+    
     # Validate file type
     if not file.filename.endswith('.pdf'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only PDF files are supported"
         )
+    
+    # Validate file size (50 MB limit)
+    content = await file.read()
+    file_size_mb = len(content) / (1024 * 1024)
+    
+    if len(content) > settings.max_file_size:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "message": f"File too large. Maximum size is {settings.max_file_size / (1024 * 1024):.0f} MB.",
+                "file_size_mb": round(file_size_mb, 2),
+                "max_size_mb": settings.max_file_size / (1024 * 1024)
+            }
+        )
+    
+    await file.seek(0)  # Reset file pointer after reading
     
     try:
         # Read file content

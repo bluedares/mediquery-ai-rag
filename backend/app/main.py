@@ -59,16 +59,15 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5174",
-        "http://localhost:5173",
-        "http://127.0.0.1:5174",
+        "http://localhost:5173",  # Vite dev server
+        "http://localhost:3000",  # Alternative dev port
         "http://127.0.0.1:5173",
-        "*"  # Allow all for development
+        "http://127.0.0.1:3000",
+        "https://mediquery-frontend.onrender.com",  # Production frontend
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"]
 )
 
 
@@ -165,13 +164,15 @@ async def root():
     }
 
 
-# Include API routers
-from app.api import query, health, upload, documents
+# Import routers
+from app.api import health, upload, query, documents, storage
 
-app.include_router(query.router, prefix=settings.api_prefix, tags=["Query"])
+# Include routers
+app.include_router(health.router, prefix=settings.api_prefix, tags=["Health"])
 app.include_router(upload.router, prefix=settings.api_prefix, tags=["Upload"])
-app.include_router(health.router, tags=["Health"])
+app.include_router(query.router, prefix=settings.api_prefix, tags=["Query"])
 app.include_router(documents.router, prefix=settings.api_prefix, tags=["Documents"])
+app.include_router(storage.router, prefix=f"{settings.api_prefix}/storage", tags=["Storage"])
 
 
 if __name__ == "__main__":

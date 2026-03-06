@@ -1,0 +1,42 @@
+services:
+  # Backend Service
+  - type: web
+    name: mediquery-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: USE_DIRECT_ANTHROPIC
+        value: "true"
+      - key: USE_CHROMADB
+        value: "true"
+      - key: CHROMADB_PERSIST_DIRECTORY
+        value: "/opt/render/project/src/chroma_data"
+      - key: AWS_REGION
+        value: "us-east-1"
+      - key: S3_BUCKET_NAME
+        value: "mediquery-documents"
+      - key: OPENSEARCH_ENDPOINT
+        value: ""
+    disk:
+      name: chromadb-data
+      mountPath: /opt/render/project/src/chroma_data
+      sizeGB: 1
+
+  # Frontend Service
+  - type: web
+    name: mediquery-frontend
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

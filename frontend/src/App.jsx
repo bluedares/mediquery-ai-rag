@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 
-const API_URL = 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 function App() {
   // State management
@@ -19,10 +19,12 @@ function App() {
   const [loadingDocs, setLoadingDocs] = useState(false)
   const [conversationHistory, setConversationHistory] = useState([])
   const [expandedCitations, setExpandedCitations] = useState({})
+  const [storageStats, setStorageStats] = useState(null)
 
-  // Fetch available documents on mount
+  // Fetch available documents and storage stats on mount
   useEffect(() => {
     fetchAvailableDocs()
+    fetchStorageStats()
   }, [])
 
   const fetchAvailableDocs = async () => {
@@ -34,6 +36,15 @@ function App() {
       console.error('Failed to fetch documents:', err)
     } finally {
       setLoadingDocs(false)
+    }
+  }
+
+  const fetchStorageStats = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/v1/storage/stats`)
+      setStorageStats(response.data)
+    } catch (err) {
+      console.error('Failed to fetch storage stats:', err)
     }
   }
 
@@ -183,14 +194,24 @@ function App() {
           setError('Document uploaded but summary generation failed')
           setLoading(false)
           fetchAvailableDocs()
+          fetchStorageStats()  // Refresh storage stats after upload
         }
       }, 800)
     } catch (err) {
       timeouts.forEach(timeout => clearTimeout(timeout))
       setUploadProgress(null)
       setLoading(false)
-      setError(err.response?.data?.detail || err.message || 'Upload failed. Check backend logs.')
+      
+      // Handle storage limit errors
+      const errorDetail = err.response?.data?.detail
+      if (errorDetail && typeof errorDetail === 'object' && errorDetail.message) {
+        setError(errorDetail.message)
+      } else {
+        setError(errorDetail || err.message || 'Upload failed. Check backend logs.')
+      }
+      
       console.error('Upload error:', err)
+      fetchStorageStats()  // Refresh stats on error
     }
   }
 
@@ -290,9 +311,54 @@ function App() {
                 <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '12px' }}>
                   Upload Medical Document
                 </h2>
-                <p style={{ color: '#666', marginBottom: '24px' }}>
+                <p style={{ color: '#666', marginBottom: '12px' }}>
                   Upload a PDF to start asking questions
                 </p>
+                
+                {/* Storage Stats */}
+                {storageStats && (
+                  <div style={{
+                    marginBottom: '24px',
+                    padding: '12px 16px',
+                    background: storageStats.usage_percent >= 80 ? '#fef2f2' : '#f0fdf4',
+                    border: `1px solid ${storageStats.usage_percent >= 80 ? '#fecaca' : '#bbf7d0'}`,
+                    borderRadius: '8px',
+                    fontSize: '13px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontWeight: '600', color: storageStats.usage_percent >= 80 ? '#991b1b' : '#166534' }}>
+                        📊 Storage: {storageStats.document_count}/{storageStats.max_documents} documents
+                      </span>
+                      <span style={{ color: storageStats.usage_percent >= 80 ? '#991b1b' : '#166534' }}>
+                        {storageStats.usage_percent}% used
+                      </span>
+                    </div>
+                    <div style={{ 
+                      width: '100%', 
+                      height: '6px', 
+                      background: '#e5e7eb', 
+                      borderRadius: '3px',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        width: `${storageStats.usage_percent}%`,
+                        height: '100%',
+                        background: storageStats.usage_percent >= 80 ? '#dc2626' : '#10b981',
+                        transition: 'width 0.3s ease'
+                      }} />
+                    </div>
+                    {storageStats.usage_percent >= 80 && (
+                      <div style={{ marginTop: '8px', color: '#991b1b', fontSize: '12px' }}>
+                        ⚠️ Storage almost full! Delete old documents to upload new ones.
+                      </div>
+                    )}
+                    {storageStats.documents_remaining === 0 && (
+                      <div style={{ marginTop: '8px', color: '#991b1b', fontSize: '12px', fontWeight: '600' }}>
+                        🚫 Storage limit reached! Please delete documents before uploading.
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Existing Documents Dropdown */}
                 {availableDocs.length > 0 && (
