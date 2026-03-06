@@ -24,8 +24,9 @@ services:
         value: ""
 
   # Frontend Service
-  - type: static
+  - type: web
     name: mediquery-frontend
+    env: static
     buildCommand: "cd frontend && npm install && npm run build"
     staticPublishPath: frontend/dist
     routes:
