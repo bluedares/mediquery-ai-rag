@@ -1,5 +1,8 @@
+[providers]
+python = "3.11"
+
 [phases.setup]
-nixPkgs = ["python311", "gcc", "curl"]
+nixPkgs = ["gcc", "curl"]
 
 [phases.install]
 cmds = [
