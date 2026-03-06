@@ -29,4 +29,5 @@ RUN mkdir -p /app/chroma_data
 # Expose port
 EXPOSE 8000
 
-# Note: Start command is configured in railway.json, not here
+# Start command
+CMD ["python", "-m", "uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
