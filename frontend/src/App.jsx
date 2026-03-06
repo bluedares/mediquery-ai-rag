@@ -517,7 +517,7 @@ function App() {
                           color: uploadProgress === 'tokenizing' ? '#1e40af' :
                             ['embedding', 'analyzing', 'ready'].includes(uploadProgress) ? '#6b7280' : '#9ca3af'
                         }}>
-                          Creating Tokens
+                          Creating Chunks
                         </span>
                       </div>
 
