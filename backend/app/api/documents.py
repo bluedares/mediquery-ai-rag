@@ -216,17 +216,21 @@ Medical Report:
 {full_text[:4000]}
 
 IMPORTANT INSTRUCTIONS:
-1. Extract ONLY health metrics that are explicitly mentioned in the report (e.g., Blood Glucose, Cholesterol, Blood Pressure, Heart Rate, BMI, etc.)
-2. Do NOT include metrics that are not in the report
-3. Calculate a score (0-100) based on the actual values in the report:
+1. Identify the report type (e.g., "Blood Test Report", "Complete Blood Count", "Lipid Panel", "Diabetes Screening", "Cancer Marker Test", "Thyroid Function Test", etc.)
+2. Provide a brief 1-2 sentence description of what this report is about
+3. Extract ONLY health metrics that are explicitly mentioned in the report (e.g., Blood Glucose, Cholesterol, Blood Pressure, Heart Rate, BMI, etc.)
+4. Do NOT include metrics that are not in the report
+5. Calculate a score (0-100) based on the actual values in the report:
    - 80-100 = good (green: #10b981)
    - 50-79 = moderate (yellow: #f59e0b)
    - 0-49 = needs attention (red: #ef4444)
-4. Extract 3-5 key findings from the report
+6. Extract 3-5 key findings from the report
 
 Return ONLY valid JSON, no other text:
 
 {{
+    "report_type": "Blood Test Report",
+    "report_description": "Complete blood count and metabolic panel showing overall health status",
     "health_indicators": [
         {{"name": "Metric Name", "value": 85, "status": "good", "color": "#10b981"}}
     ],
@@ -298,20 +302,50 @@ Return ONLY valid JSON, no other text:
         except Exception as e:
             logger.warning(f"Failed to parse LLM response: {e}")
             logger.warning(f"Response was: {response[:500]}")
-            # Fallback to default summary
+            
+            # Extract basic findings from document text as fallback
+            import re
+            key_findings = []
+            for result in search_results[:10]:  # Check more chunks to find good content
+                text = result.get('text', '').strip()
+                if not text or len(text) < 40:  # Need substantial text
+                    continue
+                
+                # Clean and validate text
+                # Remove non-printable characters and excessive whitespace
+                text = re.sub(r'[^\x20-\x7E\n]', '', text)  # Keep only printable ASCII
+                text = re.sub(r'\s+', ' ', text).strip()
+                
+                # Skip if mostly numbers/symbols or looks like metadata
+                if len(re.findall(r'[a-zA-Z]', text)) < len(text) * 0.5:  # Less than 50% letters
+                    continue
+                if re.match(r'^(Page \d+|Sample|PID|Sex|Age|Ref)', text):
+                    continue
+                
+                # Extract first meaningful sentence
+                sentences = text.split('. ')
+                for sentence in sentences:
+                    sentence = sentence.strip()
+                    if len(sentence) >= 40 and len(sentence) <= 200:  # Good length
+                        # Check if it's a meaningful sentence (has verbs/content words)
+                        if re.search(r'\b(is|are|was|were|has|have|shows|indicates|level|count|result)\b', sentence, re.I):
+                            if sentence not in key_findings:
+                                key_findings.append(sentence)
+                                break
+                
+                if len(key_findings) >= 4:
+                    break
+            
+            # If still no findings, use generic message
+            if not key_findings:
+                key_findings = ["Document uploaded successfully - use Q&A to ask specific questions about your report"]
+            
+            # Fallback summary - NO fake health indicators, just show we have the document
             summary_data = {
-                "health_indicators": [
-                    {"name": "Blood Glucose", "value": 75, "status": "moderate", "color": "#f59e0b"},
-                    {"name": "Cholesterol", "value": 65, "status": "moderate", "color": "#f59e0b"},
-                    {"name": "Blood Pressure", "value": 70, "status": "moderate", "color": "#f59e0b"}
-                ],
-                "overall_score": "Moderate",
-                "overall_color": "#f59e0b",
-                "key_findings": [
-                    "Document analyzed successfully",
-                    "Health metrics extracted",
-                    "Ready for detailed Q&A"
-                ]
+                "health_indicators": [],  # Don't show fake metrics
+                "overall_score": "Analysis Available",
+                "overall_color": "#3b82f6",
+                "key_findings": key_findings
             }
         
         # Build response
@@ -323,6 +357,8 @@ Return ONLY valid JSON, no other text:
         summary = DocumentSummary(
             document_id=document_id,
             title=search_results[0].get('metadata', {}).get('title', document_id),
+            report_type=summary_data.get("report_type"),
+            report_description=summary_data.get("report_description"),
             health_indicators=health_indicators,
             overall_score=summary_data.get("overall_score", "Moderate"),
             overall_color=summary_data.get("overall_color", "#f59e0b"),
