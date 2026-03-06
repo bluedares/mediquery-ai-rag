@@ -1,5 +1,6 @@
 services:
   # Backend Service
+  # Updated: 2026-03-06 - Force config reload with correct PYTHONPATH
   - type: web
     name: mediquery-backend
     env: python
