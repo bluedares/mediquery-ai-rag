@@ -3,6 +3,44 @@ import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
+// Add mobile-responsive styles
+const mobileStyles = `
+  @media (max-width: 768px) {
+    .card {
+      padding: 16px !important;
+      margin: 8px !important;
+    }
+    
+    .mobile-stack {
+      flex-direction: column !important;
+    }
+    
+    .mobile-full-width {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    
+    .mobile-text-sm {
+      font-size: 12px !important;
+    }
+    
+    .mobile-hide {
+      display: none !important;
+    }
+    
+    .mobile-padding-sm {
+      padding: 8px !important;
+    }
+  }
+`
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style')
+  styleSheet.textContent = mobileStyles
+  document.head.appendChild(styleSheet)
+}
+
 function App() {
   // State management
   const [uploadedDoc, setUploadedDoc] = useState(null)
@@ -271,17 +309,18 @@ function App() {
   ]
 
   return (
-    <div style={{ minHeight: '100vh', padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="mobile-full-width" style={{ minHeight: '100vh', padding: 'clamp(12px, 3vw, 20px)', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
-      <header style={{ marginBottom: '30px', textAlign: 'center' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px' }}>
+      <header className="mobile-padding-sm" style={{ marginBottom: '30px', textAlign: 'center' }}>
+        <h1 style={{ fontSize: 'clamp(22px, 5vw, 28px)', fontWeight: 'bold', marginBottom: '8px' }}>
           🏥 MediQuery AI
         </h1>
-        <p style={{ color: '#666', fontSize: '14px' }}>
+        <p className="mobile-text-sm" style={{ color: '#666', fontSize: '14px' }}>
           Multi-Agent RAG System • Claude Sonnet 4.6 • LangGraph
         </p>
         <button
           onClick={() => setShowDebug(!showDebug)}
+          className="mobile-text-sm"
           style={{
             marginTop: '12px',
             padding: '6px 16px',
@@ -299,16 +338,20 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <div style={{ display: 'grid', gridTemplateColumns: showDebug ? '1fr 1fr' : '1fr', gap: '20px' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: showDebug ? 'repeat(auto-fit, minmax(300px, 1fr))' : '1fr', 
+        gap: 'clamp(12px, 3vw, 20px)' 
+      }}>
 
         {/* LEFT COLUMN — Upload / Summary / Query */}
         <div>
           {!uploadedDoc ? (
             /* UPLOAD STATE */
-            <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-              <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '20px' }}>📄</div>
-                <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '12px' }}>
+            <div className="mobile-full-width" style={{ maxWidth: '600px', margin: '0 auto' }}>
+              <div className="card" style={{ textAlign: 'center', padding: 'clamp(24px, 5vw, 40px)' }}>
+                <div style={{ fontSize: 'clamp(36px, 8vw, 48px)', marginBottom: '20px' }}>📄</div>
+                <h2 style={{ fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: '600', marginBottom: '12px' }}>
                   Upload Medical Document
                 </h2>
                 <p style={{ color: '#666', marginBottom: '12px' }}>
@@ -325,11 +368,11 @@ function App() {
                     borderRadius: '8px',
                     fontSize: '13px'
                   }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ fontWeight: '600', color: storageStats.usage_percent >= 80 ? '#991b1b' : '#166534' }}>
+                    <div className="mobile-stack" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', gap: '8px' }}>
+                      <span className="mobile-text-sm" style={{ fontWeight: '600', color: storageStats.usage_percent >= 80 ? '#991b1b' : '#166534' }}>
                         📊 Storage: {storageStats.document_count}/{storageStats.max_documents} documents
                       </span>
-                      <span style={{ color: storageStats.usage_percent >= 80 ? '#991b1b' : '#166534' }}>
+                      <span className="mobile-text-sm" style={{ color: storageStats.usage_percent >= 80 ? '#991b1b' : '#166534', whiteSpace: 'nowrap' }}>
                         {storageStats.usage_percent}% used
                       </span>
                     </div>
@@ -596,9 +639,10 @@ function App() {
 
           ) : showSummary && docSummary ? (
             /* SUMMARY STATE - New Layout */
-            <div style={{ 
+            <div className="mobile-full-width" style={{ 
               maxWidth: '900px', 
               margin: '0 auto',
+              padding: '0 8px',
               display: 'flex',
               flexDirection: 'column',
               height: 'calc(100vh - 200px)'
@@ -826,9 +870,10 @@ function App() {
                 borderTop: '2px solid #e5e7eb',
                 flexShrink: 0
               }}>
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <div className="mobile-stack" style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                   <button
                     onClick={handleProceedToQuery}
+                    className="mobile-full-width"
                     style={{
                       padding: '14px 40px',
                       background: 'linear-gradient(135deg, #0284c7, #0369a1)',
@@ -836,7 +881,7 @@ function App() {
                       border: 'none',
                       borderRadius: '8px',
                       cursor: 'pointer',
-                      fontSize: '16px',
+                      fontSize: 'clamp(14px, 3vw, 16px)',
                       fontWeight: '600',
                       boxShadow: '0 4px 6px rgba(2, 132, 199, 0.3)',
                       transition: 'all 0.2s'
@@ -848,6 +893,7 @@ function App() {
                   </button>
                   <button
                     onClick={handleClearDocument}
+                    className="mobile-full-width"
                     style={{
                       padding: '14px 24px',
                       background: '#f3f4f6',
@@ -855,7 +901,7 @@ function App() {
                       border: '1px solid #d1d5db',
                       borderRadius: '8px',
                       cursor: 'pointer',
-                      fontSize: '14px',
+                      fontSize: 'clamp(13px, 3vw, 14px)',
                       fontWeight: '500',
                       transition: 'all 0.2s'
                     }}
@@ -1064,50 +1110,6 @@ function App() {
                     </div>
                     
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'end' }}>
-                      <textarea
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Ask about the document..."
-                        disabled={loading}
-                        rows={2}
-                        style={{
-                          flex: 1,
-                          padding: '12px',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '8px',
-                          fontSize: '14px',
-                          resize: 'none',
-                          fontFamily: 'inherit'
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault()
-                            handleQuery(e)
-                          }
-                        }}
-                      />
-                      <button
-                        type="submit"
-                        disabled={loading || !query.trim()}
-                        style={{
-                          padding: '12px 24px',
-                          background: loading || !query.trim() ? '#d1d5db' : '#0284c7',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: loading || !query.trim() ? 'not-allowed' : 'pointer',
-                          fontSize: '14px',
-                          fontWeight: '500',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {loading ? '⏳ Retrieving chunks...' : '🚀 Ask'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {error && (
-                    <div style={{
                       padding: '10px 12px',
                       background: '#fef2f2',
                       border: '1px solid #fecaca',
