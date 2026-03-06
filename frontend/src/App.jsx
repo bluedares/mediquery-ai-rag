@@ -3,8 +3,13 @@ import axios from 'axios'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-// Add mobile-responsive styles
+// Add mobile-responsive styles and animations
 const mobileStyles = `
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
   @media (max-width: 768px) {
     .card {
       padding: 16px !important;
@@ -59,14 +64,29 @@ function App() {
   const [expandedCitations, setExpandedCitations] = useState({})
   const [storageStats, setStorageStats] = useState(null)
   
-  // Ref for Q&A section to enable auto-scroll
+  // Refs for Q&A section to enable auto-scroll
   const qaInputRef = useRef(null)
+  const qaConversationRef = useRef(null)
+  const latestAnswerRef = useRef(null)
+  const summaryScrollRef = useRef(null)
 
   // Fetch available documents and storage stats on mount
   useEffect(() => {
     fetchAvailableDocs()
     fetchStorageStats()
   }, [])
+
+  // Auto-scroll to bottom when conversation history updates
+  useEffect(() => {
+    if (conversationHistory.length > 0 && summaryScrollRef.current) {
+      setTimeout(() => {
+        summaryScrollRef.current.scrollTo({
+          top: summaryScrollRef.current.scrollHeight,
+          behavior: 'smooth'
+        })
+      }, 100)
+    }
+  }, [conversationHistory])
 
   const fetchAvailableDocs = async () => {
     try {
@@ -180,17 +200,38 @@ function App() {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
 
-      setUploadProgress('ready')
+      // Go directly to generating summary (skip 'ready' state)
+      setUploadProgress('generating_summary')
 
       // Fetch AI-generated summary
       setTimeout(async () => {
         try {
           const summaryResponse = await axios.get(`${API_URL}/api/v1/documents/${response.data.document_id}/summary`)
           
+          // Check if we got valid health indicators
+          const hasHealthData = summaryResponse.data.health_indicators && 
+                                summaryResponse.data.health_indicators.length > 0
+          
+          if (!hasHealthData) {
+            // No medical data found - show error
+            setUploadedDoc({
+              id: response.data.document_id,
+              filename: response.data.filename,
+              pages: summaryResponse.data.pages,
+              chunks: summaryResponse.data.chunks
+            })
+            setUploadProgress(null)
+            setError("Couldn't find any medical analysis in this document. Please try uploading a different medical report with health metrics like blood tests, vitals, or lab results.")
+            setLoading(false)
+            return
+          }
+          
           const summary = {
             title: summaryResponse.data.title,
             pages: summaryResponse.data.pages,
             chunks: summaryResponse.data.chunks,
+            reportType: summaryResponse.data.report_type,
+            reportDescription: summaryResponse.data.report_description,
             healthIndicators: summaryResponse.data.health_indicators.map(ind => ({
               name: ind.name,
               value: ind.value,
@@ -273,6 +314,7 @@ function App() {
       })
       
       // Add to conversation history
+      const isFirstQuestion = conversationHistory.length === 0
       setConversationHistory(prev => [...prev, {
         question: currentQuery,
         answer: response.data.answer,
@@ -283,6 +325,16 @@ function App() {
       
       setResult(response.data)
       setQuery('') // Clear input after successful query
+      
+      // Scroll to the latest answer after each Q&A so user sees the response
+      setTimeout(() => {
+        if (latestAnswerRef.current) {
+          latestAnswerRef.current.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'end'
+          })
+        }
+      }, 100)
     } catch (err) {
       setError(err.response?.data?.detail?.message || err.message || 'Query failed')
     } finally {
@@ -305,15 +357,18 @@ function App() {
     // Keep summary visible, just enable Q&A mode
     setShowSummary(false)
     
-    // Scroll to Q&A input after a brief delay to ensure DOM is updated
+    // Scroll to Q&A section after a brief delay to ensure DOM is updated
     setTimeout(() => {
       if (qaInputRef.current) {
         qaInputRef.current.scrollIntoView({ 
           behavior: 'smooth', 
-          block: 'start'
+          block: 'center'
         })
+        // Focus the input for better UX
+        const input = qaInputRef.current.querySelector('input')
+        if (input) input.focus()
       }
-    }, 100)
+    }, 200)
   }
 
   const examples = [
@@ -326,11 +381,11 @@ function App() {
     <div className="mobile-full-width" style={{ minHeight: '100vh', padding: 'clamp(12px, 3vw, 20px)', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
       <header className="mobile-padding-sm" style={{ marginBottom: '30px', textAlign: 'center' }}>
-        <h1 style={{ fontSize: 'clamp(22px, 5vw, 28px)', fontWeight: 'bold', marginBottom: '8px' }}>
+        <h1 className="mobile-text-lg" style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px', color: '#111827' }}>
           🏥 MediQuery AI
         </h1>
         <p className="mobile-text-sm" style={{ color: '#666', fontSize: '14px' }}>
-          Multi-Agent RAG System • Claude Sonnet 4.6 • LangGraph
+          AI-Powered Medical Report Analysis
         </p>
         {/* Debug button hidden - uncomment to enable debug panel
         <button
@@ -372,7 +427,7 @@ function App() {
                 </h2>
                 <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '14px', lineHeight: '1.6', maxWidth: '500px', margin: '0 auto 24px' }}>
                   Upload your medical report and ask questions in plain language. 
-                  Get instant insights powered by Claude AI and advanced RAG technology.
+                  Get instant insights powered by AI.
                 </p>
                 
                 {/* Features */}
@@ -497,31 +552,46 @@ function App() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div style={{
                           width: '24px', height: '24px', borderRadius: '50%',
-                          background: uploadProgress === 'analyzing' ? '#3b82f6' :
+                          background: ['analyzing', 'generating_summary'].includes(uploadProgress) ? '#3b82f6' :
                             uploadProgress === 'ready' ? '#10b981' : '#e5e7eb',
-                          color: uploadProgress === 'analyzing' || uploadProgress === 'ready' ? 'white' : '#9ca3af',
+                          color: ['analyzing', 'generating_summary'].includes(uploadProgress) || uploadProgress === 'ready' ? 'white' : '#9ca3af',
                           display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px'
                         }}>
-                          {uploadProgress === 'analyzing' ? '⏳' :
+                          {['analyzing', 'generating_summary'].includes(uploadProgress) ? '⏳' :
                             uploadProgress === 'ready' ? '✓' : '○'}
                         </div>
                         <span style={{
                           fontSize: '14px',
-                          color: uploadProgress === 'analyzing' ? '#1e40af' :
+                          color: ['analyzing', 'generating_summary'].includes(uploadProgress) ? '#1e40af' :
                             uploadProgress === 'ready' ? '#6b7280' : '#9ca3af'
                         }}>
                           Analyzing Report
                         </span>
                       </div>
 
-                      {/* Ready */}
-                      {uploadProgress === 'ready' && (
+                      {/* Generating Summary */}
+                      {uploadProgress === 'generating_summary' && (
                         <div style={{
-                          marginTop: '8px', padding: '12px', background: '#d1fae5',
-                          borderRadius: '6px', fontSize: '14px', fontWeight: '600',
-                          color: '#065f46', textAlign: 'center'
+                          marginTop: '16px',
+                          padding: '16px',
+                          background: '#dbeafe',
+                          border: '1px solid #3b82f6',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px'
                         }}>
-                          ✅ Ready! You can now ask questions
+                          <div className="spinner" style={{
+                            width: '20px',
+                            height: '20px',
+                            border: '3px solid #bfdbfe',
+                            borderTop: '3px solid #3b82f6',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                          }} />
+                          <div style={{ fontSize: '14px', fontWeight: '600', color: '#1e40af' }}>
+                            Generating AI Summary...
+                          </div>
                         </div>
                       )}
                     </div>
@@ -548,6 +618,85 @@ function App() {
               </div>
             </div>
 
+          ) : uploadedDoc && !docSummary && error ? (
+            /* ERROR STATE - No Medical Data Found */
+            <div className="mobile-full-width" style={{ 
+              maxWidth: '700px', 
+              margin: '0 auto',
+              padding: '0 8px'
+            }}>
+              <div className="card" style={{ padding: '48px 32px', textAlign: 'center' }}>
+                {/* Error Icon */}
+                <div style={{ fontSize: '64px', marginBottom: '24px' }}>📄</div>
+                
+                {/* Error Title */}
+                <h3 style={{ 
+                  fontSize: '20px', 
+                  fontWeight: '600', 
+                  color: '#111827',
+                  marginBottom: '12px'
+                }}>
+                  No Health Metrics Found
+                </h3>
+                
+                {/* Error Message */}
+                <p style={{ 
+                  fontSize: '14px', 
+                  color: '#6b7280', 
+                  lineHeight: '1.6',
+                  marginBottom: '24px',
+                  maxWidth: '500px',
+                  margin: '0 auto 24px'
+                }}>
+                  This document doesn't contain standard health indicators like blood pressure, glucose, cholesterol, etc.
+                </p>
+                
+                {/* Yellow Warning Box */}
+                <div style={{
+                  background: '#fef3c7',
+                  border: '1px solid #fbbf24',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  marginBottom: '24px',
+                  textAlign: 'left'
+                }}>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'start' }}>
+                    <div style={{ fontSize: '20px' }}>⚠️</div>
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: '600', color: '#92400e', marginBottom: '4px' }}>
+                        Document Status: Analysis Available
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#78350f', lineHeight: '1.5' }}>
+                        {error}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={handleClearDocument}
+                    style={{
+                      padding: '12px 24px',
+                      background: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseOver={(e) => { e.target.style.background = '#2563eb'; }}
+                    onMouseOut={(e) => { e.target.style.background = '#3b82f6'; }}
+                  >
+                    📤 Upload Different Report
+                  </button>
+                </div>
+              </div>
+            </div>
+
           ) : uploadedDoc && docSummary ? (
             /* SUMMARY + Q&A STATE - Combined Layout */
             <div className="mobile-full-width" style={{ 
@@ -559,27 +708,34 @@ function App() {
               height: 'calc(100vh - 200px)'
             }}>
               {/* Scrollable Content Area - Summary + Q&A */}
-              <div style={{
-                flex: 1,
-                overflowY: 'auto',
-                marginBottom: '16px',
-                paddingRight: '8px'
-              }}>
+              <div 
+                ref={summaryScrollRef}
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  marginBottom: '16px',
+                  paddingRight: '8px'
+                }}>
                 <div className="card" style={{ padding: '32px' }}>
                   {/* Header */}
                   <div style={{ textAlign: 'center', marginBottom: '32px' }}>
                     <div style={{ fontSize: '48px', marginBottom: '12px' }}>✅</div>
                     <h2 style={{ fontSize: '22px', fontWeight: '600', marginBottom: '6px', color: '#111827' }}>
-                      Document Processed Successfully!
+                      {docSummary.reportType || 'Document Processed Successfully!'}
                     </h2>
-                    <p style={{ color: '#6b7280', fontSize: '14px' }}>{docSummary.title}</p>
+                    {docSummary.reportDescription && (
+                      <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px', lineHeight: '1.5' }}>
+                        {docSummary.reportDescription}
+                      </p>
+                    )}
+                    <p style={{ color: '#9ca3af', fontSize: '13px' }}>📄 {docSummary.title}</p>
                   </div>
 
                   {/* Overall Health Score - Circular Progress */}
                   <div style={{
                     display: 'flex',
                     justifyContent: 'center',
-                    marginBottom: '32px'
+                    marginBottom: '24px'
                   }}>
                     <div style={{
                       position: 'relative',
@@ -629,6 +785,49 @@ function App() {
                     </div>
                   </div>
 
+                  {/* Health Status Insight Box */}
+                  <div style={{
+                    padding: '20px',
+                    background: docSummary.overallScore === 'Good' ? '#ecfdf5' : 
+                               docSummary.overallScore === 'Moderate' ? '#fef3c7' : '#fee2e2',
+                    border: `1px solid ${docSummary.overallScore === 'Good' ? '#10b981' : 
+                                         docSummary.overallScore === 'Moderate' ? '#f59e0b' : '#ef4444'}`,
+                    borderRadius: '8px',
+                    marginBottom: '24px'
+                  }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'start' }}>
+                      <div style={{ fontSize: '24px' }}>
+                        {docSummary.overallScore === 'Good' ? '✅' : 
+                         docSummary.overallScore === 'Moderate' ? '⚠️' : '🔴'}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ 
+                          fontSize: '15px', 
+                          fontWeight: '600', 
+                          marginBottom: '8px',
+                          color: docSummary.overallScore === 'Good' ? '#065f46' : 
+                                 docSummary.overallScore === 'Moderate' ? '#92400e' : '#991b1b'
+                        }}>
+                          {docSummary.overallScore === 'Good' ? 'Excellent Health Status' : 
+                           docSummary.overallScore === 'Moderate' ? 'Moderate Health Status - Attention Needed' : 
+                           'Health Concerns Detected'}
+                        </h4>
+                        <p style={{ 
+                          fontSize: '13px', 
+                          lineHeight: '1.6',
+                          color: docSummary.overallScore === 'Good' ? '#047857' : 
+                                 docSummary.overallScore === 'Moderate' ? '#78350f' : '#7f1d1d'
+                        }}>
+                          {docSummary.overallScore === 'Good' ? 
+                            'Your test results show all health indicators are within normal ranges. Continue maintaining your healthy lifestyle with regular exercise, balanced diet, and routine check-ups.' : 
+                           docSummary.overallScore === 'Moderate' ? 
+                            'Some of your health indicators are outside the optimal range. While not critical, these values suggest areas that may benefit from lifestyle adjustments or medical consultation. Review the specific indicators below and consider discussing them with your healthcare provider.' : 
+                            'Several health indicators require attention. Please consult with your healthcare provider to discuss these results and develop an appropriate treatment or management plan.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Critical Health Indicators Only */}
                   {docSummary.healthIndicators && docSummary.healthIndicators.length > 0 ? (
                     <div style={{
@@ -639,7 +838,7 @@ function App() {
                       marginBottom: '20px'
                     }}>
                       <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>
-                        ⚠️ Critical Health Indicators
+                        {docSummary.overallScore === 'Good' ? '✅' : '⚠️'} Critical Health Indicators
                       </h4>
                       
                       {/* Filter and show only abnormal indicators */}
@@ -665,7 +864,7 @@ function App() {
                         }
                         
                         return (
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
                             {criticalIndicators.map((indicator, i) => (
                               <div key={i} style={{
                                 padding: '16px',
@@ -681,12 +880,24 @@ function App() {
                                 </div>
                                 <div style={{
                                   fontSize: '11px',
-                                  fontWeight: '600',
+                                  fontWeight: '500',
                                   color: indicator.color,
                                   textTransform: 'uppercase',
-                                  letterSpacing: '0.5px'
+                                  marginBottom: '8px'
                                 }}>
                                   {indicator.status}
+                                </div>
+                                <div style={{
+                                  fontSize: '11px',
+                                  color: '#6b7280',
+                                  lineHeight: '1.4',
+                                  marginTop: '8px',
+                                  paddingTop: '8px',
+                                  borderTop: '1px solid #e5e7eb'
+                                }}>
+                                  {indicator.status === 'moderate' ? 
+                                    'Outside optimal range. Consider lifestyle changes or consult your doctor.' :
+                                    'Requires attention. Please discuss with your healthcare provider.'}
                                 </div>
                               </div>
                             ))}
@@ -775,7 +986,7 @@ function App() {
 
                 {/* Q&A Section - Shows after clicking Start Asking Questions */}
                 {!showSummary && (
-                  <div className="card" style={{ padding: '24px', marginTop: '24px' }}>
+                  <div ref={qaConversationRef} className="card" style={{ padding: '24px', marginTop: '24px' }}>
                     <div style={{ 
                       display: 'flex', 
                       justifyContent: 'space-between', 
@@ -834,15 +1045,30 @@ function App() {
                               {item.citations && item.citations.length > 0 && (
                                 <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
                                   <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>📚 Sources:</div>
-                                  {item.citations.map((citation, i) => (
-                                    <div key={i} style={{
-                                      fontSize: '12px',
-                                      color: '#6b7280',
-                                      marginBottom: '4px'
-                                    }}>
-                                      • Page {citation.page}: {citation.text.substring(0, 100)}...
-                                    </div>
-                                  ))}
+                                  {item.citations
+                                    .filter(c => {
+                                      if (!c.text || !c.text.trim()) return false
+                                      const text = c.text.trim()
+                                      // Filter out short fragments, headers, metadata
+                                      if (text.length < 30) return false
+                                      // Filter out common metadata patterns
+                                      if (/^(Sample Collection|Registered on|Collected on|Reported on|PID|Sex|Age|Ref\. By)/i.test(text)) return false
+                                      if (/^\d+\s*-\s*\d+\s*%/.test(text)) return false  // Range patterns like "50 - 62 %"
+                                      if (/^[A-Z]{2,}\s+\d/.test(text)) return false  // Abbreviations like "MCHC 32.8"
+                                      return true
+                                    })
+                                    .slice(0, 3)  // Limit to top 3 relevant citations
+                                    .map((citation, i) => (
+                                      <div key={i} style={{
+                                        fontSize: '12px',
+                                        color: '#6b7280',
+                                        marginBottom: '8px',
+                                        paddingLeft: '8px',
+                                        lineHeight: '1.5'
+                                      }}>
+                                        • <strong>Page {citation.page}:</strong> {citation.text.trim().substring(0, 200)}{citation.text.length > 200 ? '...' : ''}
+                                      </div>
+                                    ))}
                                 </div>
                               )}
                             </div>
@@ -982,26 +1208,14 @@ function App() {
             <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 180px)' }}>
               {/* Document Info Card - Fixed at top */}
               <div className="card" style={{ marginBottom: '16px', background: '#f0fdf4', border: '1px solid #bbf7d0', flexShrink: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#166534', marginBottom: '8px' }}>
-                      ✅ Document Ready
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#15803d' }}>
-                      📄 {uploadedDoc.filename}<br />
-                      📊 {uploadedDoc.pages} pages • {uploadedDoc.chunks} chunks
-                    </div>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#166534', marginBottom: '8px' }}>
+                    ✅ Document Ready
                   </div>
-                  <button
-                    onClick={handleClearDocument}
-                    style={{
-                      padding: '6px 12px', background: '#dc2626', color: 'white',
-                      border: 'none', borderRadius: '6px', cursor: 'pointer',
-                      fontSize: '12px', fontWeight: '500'
-                    }}
-                  >
-                    ✕ Clear & Upload New
-                  </button>
+                  <div style={{ fontSize: '13px', color: '#15803d' }}>
+                    📄 {uploadedDoc.filename}<br />
+                    📊 {uploadedDoc.pages} pages • {uploadedDoc.chunks} chunks
+                  </div>
                 </div>
               </div>
 
@@ -1028,7 +1242,10 @@ function App() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     {conversationHistory.map((item, idx) => (
-                      <div key={idx}>
+                      <div 
+                        key={idx}
+                        ref={idx === conversationHistory.length - 1 ? latestAnswerRef : null}
+                      >
                         {/* Question */}
                         <div style={{
                           display: 'flex',
@@ -1180,11 +1397,34 @@ function App() {
                       border: '1px solid #fecaca',
                       borderRadius: '6px',
                       color: '#991b1b',
-                      fontSize: '13px'
+                      fontSize: '13px',
+                      marginBottom: '12px'
                     }}>
                       ❌ {error}
                     </div>
                   )}
+                  
+                  {/* Clear & Upload New Button - Moved to bottom */}
+                  <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
+                    <button
+                      onClick={handleClearDocument}
+                      style={{
+                        padding: '8px 16px',
+                        background: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseOver={(e) => { e.target.style.background = '#b91c1c'; }}
+                      onMouseOut={(e) => { e.target.style.background = '#dc2626'; }}
+                    >
+                      ✕ Clear & Upload New
+                    </button>
+                  </div>
                 </form>
               </div>
             </div>

@@ -36,21 +36,26 @@ async def retrieval_agent(state: AgentState) -> AgentState:
     """
     
     query = state['user_query']
+    expanded_query = state.get('expanded_query')
     document_id = state['document_id']
     strategy = state['search_strategy']
+    
+    # Use expanded query if available for better retrieval
+    search_query = expanded_query if expanded_query else query
     
     logger.debug(
         "🔍 Retrieving chunks",
         query=query,
+        search_query=search_query,
         document_id=document_id,
         strategy=strategy,
         trace_id=state['request_id']
     )
     
     try:
-        # Generate query embedding
+        # Generate query embedding using search_query
         logger.debug("Generating query embedding")
-        query_embedding = await embedding_service.encode_single(query)
+        query_embedding = await embedding_service.encode_single(search_query)
         
         # Determine collection/index name
         collection_name = f"medical-docs-{document_id}"
@@ -65,17 +70,18 @@ async def retrieval_agent(state: AgentState) -> AgentState:
             
             # ChromaDB uses vector search (hybrid search is same as vector search)
             if strategy == 'semantic' or strategy == 'hybrid':
+                # Retrieve more chunks to ensure we get test results pages
                 chunks = await chromadb_svc.vector_search(
                     collection_name=collection_name,
                     query_embedding=query_embedding,
-                    top_k=settings.top_k_retrieval
+                    top_k=50  # Increased from default to get better coverage
                 )
             else:  # keyword
                 chunks = await chromadb_svc.hybrid_search(
                     collection_name=collection_name,
                     query_text=query,
                     query_embedding=query_embedding,
-                    top_k=settings.top_k_retrieval
+                    top_k=50  # Increased from default to get better coverage
                 )
         else:
             logger.debug("📊 Using OpenSearch for retrieval")

@@ -67,10 +67,24 @@ async def query_analyzer_agent(state: AgentState) -> AgentState:
         strategy = 'hybrid'
         logger.debug("Intent: General query")
     
+    # Implement query expansion for better retrieval
+    expanded_query = None
+    query_lower = query.lower()
+    
+    # If asking about normal values, expand query to include reference range terms
+    if any(term in query_lower for term in ['normal', 'abnormal', 'high', 'low', 'range', 'reference']):
+        expanded_query = f"{query} reference range normal values reference interval"
+        logger.debug(
+            "🔍 Expanded query to include reference range terms",
+            original=query,
+            expanded=expanded_query,
+            request_id=state['request_id']
+        )
+    
     # Update state
     state['intent'] = intent
     state['search_strategy'] = strategy
-    state['expanded_query'] = None  # TODO: Implement query expansion
+    state['expanded_query'] = expanded_query
     
     logger.info(
         "✅ Query analysis complete",

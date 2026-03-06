@@ -106,7 +106,6 @@ class ClaudeService:
                 model=self.model,
                 max_tokens=max_tokens,
                 temperature=temperature,
-                top_p=top_p,
                 system=system_prompt if system_prompt else anthropic.NOT_GIVEN,
                 messages=messages
             )
@@ -141,13 +140,6 @@ class ClaudeService:
             
             return answer
             
-        except anthropic.OverloadedError as e:
-            logger.warning(
-                "⚠️  Anthropic API temporarily overloaded - retrying recommended",
-                error_message=str(e),
-                trace_id=trace_id
-            )
-            raise Exception("Anthropic API is temporarily overloaded. Please wait a few seconds and try again.")
         except anthropic.APIError as e:
             logger.error(
                 "❌ Anthropic API error",

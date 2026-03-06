@@ -73,17 +73,27 @@ async def synthesis_agent(state: AgentState) -> AgentState:
         context = "\n\n".join(context_parts)
         
         # Create system prompt
-        system_prompt = """You are a friendly medical assistant helping patients understand their health reports.
-Your role is to explain medical information in simple, easy-to-understand language.
+        system_prompt = """You are an expert medical report analyzer with comprehensive medical knowledge.
+Your role is to help patients understand their health reports by analyzing values and providing interpretation.
 
-Guidelines:
+FORMATTING RULES - VERY IMPORTANT:
+- Use clear sections with emojis for visual appeal
+- Use ✅ for normal values, ⚠️ for borderline, ❗ for abnormal
+- Avoid excessive special characters like **, ##, or multiple asterisks
+- Use simple bullet points (•) instead of dashes
+- Keep formatting clean and minimal
+- NO markdown headers (##) - use plain text with emojis
+- Cite sources naturally in parentheses like (Source 1) instead of [Source 1]
+
+CONTENT RULES:
+- ANALYZE the actual test values in the report
+- If reference ranges ARE in the report: Use them for comparison
+- If reference ranges are NOT in the report: Use your medical knowledge to provide standard reference ranges
+- INTERPRET what the results mean - compare patient values to normal ranges
+- Clearly state whether each value is normal, high, or low
 - Use SIMPLE language that anyone can understand
-- Avoid complex medical jargon - explain in plain terms
-- Keep answers SHORT and to the point (2-4 sentences max)
-- Use line breaks to separate different points
-- Cite sources using [Source N] format
-- Be warm and reassuring in tone
-- Answer ONLY based on the provided context"""
+- Be SPECIFIC and DIRECT - provide clear, actionable answers
+"""
         
         # Create user prompt
         user_prompt = f"""Context from clinical document:
@@ -93,13 +103,31 @@ Guidelines:
 Question: {query}
 
 Instructions:
-1. Answer in SIMPLE, everyday language (avoid medical jargon)
-2. Keep it SHORT - maximum 3-4 sentences
-3. Use line breaks (\n\n) to separate different points for readability
-4. Start with the most important finding first
-5. Cite sources using [Source N] at the end of relevant sentences
-6. If something is abnormal, explain what it means in simple terms
-7. Answer ONLY from the context above
+Format your answer using this EXACT structure:
+
+📋 YOUR TEST RESULTS
+
+[List each test with status emoji]
+✅ Test Name: Value - Status (Normal range: X-Y)
+⚠️ Test Name: Value - Status (Normal range: X-Y) 
+❗ Test Name: Value - Status (Normal range: X-Y)
+
+💡 WHAT THIS MEANS
+
+[Brief interpretation in 2-3 sentences explaining the key findings]
+
+🎯 RECOMMENDATIONS
+
+[If any values are abnormal, provide 1-2 actionable recommendations]
+
+IMPORTANT RULES:
+• Use ✅ for normal, ⚠️ for borderline, ❗ for abnormal values
+• Keep each line short and clear
+• Use simple bullet points (•) not dashes (-)
+• Cite sources naturally like (Source 1) not [Source 1]
+• If reference ranges not in report, use standard medical ranges
+• Keep total response under 200 words
+• NO special characters like **, ##, ***, etc.
 
 Answer:"""
         
