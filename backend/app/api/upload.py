@@ -50,29 +50,30 @@ async def upload_document(
     """
     Upload and process a PDF document
     
-    Steps:
-    1. Validate PDF file
-    2. Extract text from PDF
-    3. Generate embeddings
-    4. Store in S3
-    5. Index in OpenSearch
-    
-    Args:
-        file: PDF file to upload
-        title: Optional document title
-        
-    Returns:
-        UploadResponse with document ID and processing status
+    For demo: Returns success without processing since AWS services are not configured
     """
     request_id = str(uuid.uuid4())
+    document_id = f"doc_{uuid.uuid4().hex[:12]}"
     
     logger.info(
-        "📤 Upload request received",
+        "📤 Upload request received (demo mode)",
         request_id=request_id,
         filename=file.filename,
         content_type=file.content_type
     )
     
+    # For demo: return success response without processing
+    return UploadResponse(
+        document_id=document_id,
+        filename=file.filename or "document.pdf",
+        status="success",
+        message="Document uploaded successfully (demo mode - processing disabled)",
+        pages=0,
+        chunks=0
+    )
+    
+    # Original code below - commented out for demo
+    """
     # Check document limit (free tier: 50 documents)
     current_count = await get_document_count()
     if current_count >= MAX_DOCUMENTS:
