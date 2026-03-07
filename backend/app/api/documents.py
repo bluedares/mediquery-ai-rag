@@ -210,14 +210,53 @@ async def get_document_summary(document_id: str):
         
         # Return the multi-agent generated summary directly
         # The frontend will display this text as-is (it's already properly formatted)
+        
+        # Smarter overall score calculation based on findings ratio
+        normal_count = summary_text.count('• ') if '✅' in summary_text else 0
+        borderline_count = summary_text.count('• ') if '⚠️' in summary_text else 0
+        abnormal_count = summary_text.count('• ') if '❗' in summary_text else 0
+        
+        # Count items in each section more accurately
+        normal_section = summary_text.split('✅')[1].split('⚠️')[0] if '✅' in summary_text and '⚠️' in summary_text else (summary_text.split('✅')[1].split('❗')[0] if '✅' in summary_text and '❗' in summary_text else (summary_text.split('✅')[1] if '✅' in summary_text else ''))
+        borderline_section = summary_text.split('⚠️')[1].split('❗')[0] if '⚠️' in summary_text and '❗' in summary_text else (summary_text.split('⚠️')[1] if '⚠️' in summary_text else '')
+        abnormal_section = summary_text.split('❗')[1] if '❗' in summary_text else ''
+        
+        normal_count = normal_section.count('• ')
+        borderline_count = borderline_section.count('• ')
+        abnormal_count = abnormal_section.count('• ')
+        total_count = normal_count + borderline_count + abnormal_count
+        
+        # Determine overall score based on ratio
+        if total_count > 0:
+            abnormal_ratio = abnormal_count / total_count
+            borderline_ratio = borderline_count / total_count
+            normal_ratio = normal_count / total_count
+            
+            # Good: >70% normal, <10% abnormal
+            # Moderate: 40-70% normal OR 10-30% abnormal
+            # Needs Attention: <40% normal OR >30% abnormal
+            if normal_ratio > 0.7 and abnormal_ratio < 0.1:
+                overall_score = "Good"
+                overall_color = "#10b981"
+            elif abnormal_ratio > 0.3 or normal_ratio < 0.4:
+                overall_score = "Needs Attention"
+                overall_color = "#ef4444"
+            else:
+                overall_score = "Moderate"
+                overall_color = "#f59e0b"
+        else:
+            # Fallback to simple logic
+            overall_score = "Good" if "✅" in summary_text and "❗" not in summary_text else ("Needs Attention" if "❗" in summary_text else "Moderate")
+            overall_color = "#10b981" if "✅" in summary_text and "❗" not in summary_text else ("#ef4444" if "❗" in summary_text else "#f59e0b")
+        
         summary = DocumentSummary(
             document_id=document_id,
             title=f"Medical Report Analysis",
             report_type="Medical Test Report",
             report_description=summary_text,  # The categorized analysis from multi-agent
             health_indicators=[],  # Not used - text has all info
-            overall_score="Good" if "✅" in summary_text and "❗" not in summary_text else ("Needs Attention" if "❗" in summary_text else "Moderate"),
-            overall_color="#10b981" if "✅" in summary_text and "❗" not in summary_text else ("#ef4444" if "❗" in summary_text else "#f59e0b"),
+            overall_score=overall_score,
+            overall_color=overall_color,
             key_findings=[summary_text],  # The full categorized text
             pages=len(pages_set),
             chunks=len(result.get('citations', []))
