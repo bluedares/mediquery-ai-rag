@@ -214,39 +214,41 @@ async def get_document_summary(document_id: str):
                 pages_set.add(result['metadata']['page'])
         
         # Generate summary using Claude
-        prompt = f"""Extract ALL test results from this medical report.
+        prompt = f"""Extract medical test results from this report.
 
 Medical Report:
 {full_text[:4000]}
 
+IMPORTANT - Extract ONLY actual medical test results, NOT metadata:
+- YES: Hemoglobin, Glucose, WBC, Cholesterol, TSH, Creatinine, etc.
+- NO: Run Number, Rack ID, Sample ID, Report Date, Analysis Performed, etc.
+
 Task:
-1. Find EVERY test result with a numeric value in the report
-2. For EACH test, create an entry with:
-   - name: the test name
-   - value: the numeric result
-   - status and color based on:
-     * If marked "L" or below reference range → "needs attention", "#ef4444"
-     * If marked "H" or above reference range → "needs attention", "#ef4444"
-     * If borderline → "moderate", "#f59e0b"
-     * If normal → "good", "#10b981"
+1. Find medical test results with numeric values (blood tests, urine tests, vitals, etc.)
+2. SKIP metadata fields like: run number, rack ID, tube number, sample ID, dates, times, report codes
+3. For each MEDICAL test:
+   - name: actual test name (e.g., "Hemoglobin", "Glucose")
+   - value: numeric result
+   - status: compare to reference range if provided
+     * Below range or "L" → "needs attention", "#ef4444"
+     * Above range or "H" → "needs attention", "#ef4444"
+     * Borderline → "moderate", "#f59e0b"
+     * Normal → "good", "#10b981"
 
-3. Set overall_score:
-   - If ANY test has red status → "Needs Attention", "#ef4444"
-   - If ANY test has yellow status → "Moderate", "#f59e0b"
-   - If ALL tests are green → "Good", "#10b981"
+4. Overall score based on worst test result
 
-Return valid JSON with ALL test results found:
+Return JSON with ONLY medical test results:
 
 {{
     "report_type": "Blood Test",
-    "report_description": "Complete blood count",
+    "report_description": "Complete blood count analysis",
     "health_indicators": [
         {{"name": "Hemoglobin", "value": 12.5, "status": "needs attention", "color": "#ef4444"}},
-        {{"name": "WBC", "value": 8000, "status": "good", "color": "#10b981"}}
+        {{"name": "WBC Count", "value": 8000, "status": "good", "color": "#10b981"}}
     ],
     "overall_score": "Needs Attention",
     "overall_color": "#ef4444",
-    "key_findings": ["Low hemoglobin", "Normal WBC"]
+    "key_findings": ["Low hemoglobin detected", "WBC count normal"]
 }}"""
 
         # Choose LLM service based on configuration
@@ -346,8 +348,26 @@ Return valid JSON with ALL test results found:
                         test_name = match.group(1).strip()
                         test_value = match.group(2).strip()
                         
-                        # Skip if test name is too short or looks like metadata
-                        if len(test_name) < 3 or test_name.lower() in ['page', 'ref', 'id', 'age', 'sex']:
+                        # Comprehensive metadata exclusion list
+                        metadata_keywords = [
+                            'page', 'ref', 'id', 'age', 'sex', 'date', 'time', 'number', 'code',
+                            'analysis', 'performed', 'run', 'rack', 'tube', 'report', 'generated',
+                            'sample', 'specimen', 'barcode', 'patient', 'doctor', 'lab', 'laboratory',
+                            'version', 'batch', 'serial', 'accession', 'order', 'requisition',
+                            'printed', 'collected', 'received', 'registered', 'verified'
+                        ]
+                        
+                        # Skip if test name is too short or contains metadata keywords
+                        test_name_lower = test_name.lower()
+                        if len(test_name) < 3:
+                            continue
+                        
+                        # Check if test name contains any metadata keywords
+                        if any(keyword in test_name_lower for keyword in metadata_keywords):
+                            continue
+                        
+                        # Skip if test name is mostly numbers (likely an ID)
+                        if sum(c.isdigit() for c in test_name) > len(test_name) / 2:
                             continue
                         
                         # Try to convert value to number and detect abnormal markers
