@@ -177,6 +177,10 @@ async def get_document_summary(document_id: str):
         # Use the same multi-agent RAG system as Q&A for consistent, high-quality results
         from ..agents import agent_graph
         import uuid
+        import asyncio
+        
+        # Wait a bit to ensure embeddings are indexed (especially for large documents)
+        await asyncio.sleep(2)
         
         # Initialize agent state with summary query
         initial_state = {
@@ -198,9 +202,36 @@ async def get_document_summary(document_id: str):
             'errors': []
         }
         
-        # Execute agent graph to get proper analysis
-        result = await agent_graph.ainvoke(initial_state)
-        summary_text = result.get('final_answer', '')
+        # Execute agent graph to get proper analysis with retry logic
+        max_retries = 3
+        retry_count = 0
+        result = None
+        summary_text = ''
+        
+        while retry_count < max_retries:
+            result = await agent_graph.ainvoke(initial_state)
+            summary_text = result.get('final_answer', '')
+            
+            # Check if we got a valid response
+            if summary_text and "don't have enough information" not in summary_text.lower():
+                break
+            
+            # If no valid response, wait and retry
+            retry_count += 1
+            if retry_count < max_retries:
+                logger.warning(
+                    f"⚠️  Summary generation attempt {retry_count} failed, retrying...",
+                    document_id=document_id
+                )
+                await asyncio.sleep(3)  # Wait 3 seconds before retry
+        
+        # If still no valid response after retries, log error
+        if not summary_text or "don't have enough information" in summary_text.lower():
+            logger.error(
+                "❌ Failed to generate summary after retries",
+                document_id=document_id,
+                retries=retry_count
+            )
         
         # Count pages from citations
         pages_set = set()
