@@ -1016,9 +1016,6 @@ function App() {
                 {!showSummary && (
                   <div ref={qaConversationRef} className="card" style={{ padding: '24px', marginTop: '24px' }}>
                     <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center',
                       marginBottom: '20px',
                       paddingBottom: '16px',
                       borderBottom: '2px solid #e5e7eb'
@@ -1026,21 +1023,6 @@ function App() {
                       <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', margin: 0 }}>
                         💬 Ask Questions
                       </h3>
-                      <button
-                        onClick={handleClearDocument}
-                        style={{
-                          padding: '6px 12px',
-                          background: '#fee2e2',
-                          color: '#dc2626',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          fontWeight: '600'
-                        }}
-                      >
-                        ✕ Clear & Upload New
-                      </button>
                     </div>
 
                     {/* Conversation History */}
@@ -1205,7 +1187,7 @@ function App() {
                     </div>
                     
                     {/* Quick Examples */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
                       <span style={{ fontSize: '11px', color: '#9ca3af', alignSelf: 'center' }}>Quick:</span>
                       {examples.map((ex, i) => (
                         <button
@@ -1225,6 +1207,29 @@ function App() {
                           {ex}
                         </button>
                       ))}
+                    </div>
+                    
+                    {/* Clear & Upload New Button - At bottom for easy access */}
+                    <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+                      <button
+                        type="button"
+                        onClick={handleClearDocument}
+                        style={{
+                          padding: '10px 20px',
+                          background: '#dc2626',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseOver={(e) => { e.target.style.background = '#b91c1c'; }}
+                        onMouseOut={(e) => { e.target.style.background = '#dc2626'; }}
+                      >
+                        ✕ Clear & Upload New
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1418,6 +1423,41 @@ function App() {
                     </div>
                   </div>
 
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && !loading && query.trim() && handleQuery()}
+                      placeholder="Ask about your medical report..."
+                      style={{
+                        flex: 1,
+                        padding: '12px 16px',
+                        border: '2px solid #e5e7eb',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      onClick={handleQuery}
+                      disabled={loading || !query.trim()}
+                      style={{
+                        padding: '12px 24px',
+                        background: loading || !query.trim() ? '#d1d5db' : '#0284c7',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: loading || !query.trim() ? 'not-allowed' : 'pointer',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {loading ? '🔄' : '🚀'}
+                    </button>
+                  </div>
+
                   {error && (
                     <div style={{
                       padding: '10px 12px',
@@ -1426,24 +1466,25 @@ function App() {
                       borderRadius: '6px',
                       color: '#991b1b',
                       fontSize: '13px',
-                      marginBottom: '12px'
+                      marginTop: '12px'
                     }}>
                       ❌ {error}
                     </div>
                   )}
                   
-                  {/* Clear & Upload New Button - Moved to bottom */}
-                  <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
+                  {/* Clear & Upload New Button - At bottom for easy access */}
+                  <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '16px', marginTop: '16px', borderTop: '1px solid #e5e7eb' }}>
                     <button
+                      type="button"
                       onClick={handleClearDocument}
                       style={{
-                        padding: '8px 16px',
+                        padding: '10px 20px',
                         background: '#dc2626',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '6px',
+                        borderRadius: '8px',
                         cursor: 'pointer',
-                        fontSize: '13px',
+                        fontSize: '14px',
                         fontWeight: '500',
                         transition: 'all 0.2s'
                       }}
