@@ -868,34 +868,25 @@ function App() {
                       marginBottom: '20px'
                     }}>
                       <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>
-                        {docSummary.overallScore === 'Good' ? '✅' : '⚠️'} Critical Health Indicators
+                        {docSummary.overallScore === 'Good' ? '✅' : '⚠️'} Health Indicators
                       </h4>
                       
-                      {/* Filter and show only abnormal indicators */}
-                      {(() => {
-                        const criticalIndicators = docSummary.healthIndicators.filter(
-                          ind => ind.status !== 'good' && ind.status !== 'normal'
-                        );
-                        
-                        if (criticalIndicators.length === 0) {
-                          return (
-                            <div style={{
-                              padding: '20px',
-                              textAlign: 'center',
-                              background: '#d1fae5',
-                              borderRadius: '6px'
-                            }}>
-                              <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
-                              <div style={{ fontSize: '14px', fontWeight: '600', color: '#065f46' }}>
-                                All indicators within normal range
-                              </div>
-                            </div>
-                          );
-                        }
-                        
-                        return (
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-                            {criticalIndicators.map((indicator, i) => (
+                      {/* Show ALL health indicators */}
+                      {docSummary.healthIndicators.length === 0 ? (
+                        <div style={{
+                          padding: '20px',
+                          textAlign: 'center',
+                          background: '#d1fae5',
+                          borderRadius: '6px'
+                        }}>
+                          <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
+                          <div style={{ fontSize: '14px', fontWeight: '600', color: '#065f46' }}>
+                            All indicators within normal range
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                          {docSummary.healthIndicators.map((indicator, i) => (
                               <div key={i} style={{
                                 padding: '16px',
                                 background: 'white',
@@ -932,8 +923,7 @@ function App() {
                               </div>
                             ))}
                           </div>
-                        );
-                      })()}
+                      )}
                     </div>
                   ) : (
                     <div style={{
