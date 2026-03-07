@@ -47,6 +47,8 @@ if (typeof document !== 'undefined') {
 }
 
 function App() {
+  console.log('🚀 MediQuery App Loaded - Build v3.0')
+  
   // State management
   const [uploadedDoc, setUploadedDoc] = useState(null)
   const [docSummary, setDocSummary] = useState(null)
@@ -252,6 +254,8 @@ function App() {
           console.log('📋 Processed Summary Object:', summary)
           console.log('🔍 keyPoints:', summary.keyPoints)
           console.log('🔍 keyPoints[0]:', summary.keyPoints ? summary.keyPoints[0] : 'undefined')
+          console.log('🔍 keyPoints type:', typeof summary.keyPoints)
+          console.log('🔍 keyPoints is array:', Array.isArray(summary.keyPoints))
           
           setUploadedDoc({
             id: response.data.document_id,
