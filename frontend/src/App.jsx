@@ -248,6 +248,11 @@ function App() {
             }
           }
           
+          console.log('📊 Summary API Response:', summaryResponse.data)
+          console.log('📋 Processed Summary Object:', summary)
+          console.log('🔍 keyPoints:', summary.keyPoints)
+          console.log('🔍 keyPoints[0]:', summary.keyPoints ? summary.keyPoints[0] : 'undefined')
+          
           setUploadedDoc({
             id: response.data.document_id,
             filename: response.data.filename,
@@ -859,6 +864,13 @@ function App() {
                   </div>
 
                   {/* Test Results Analysis - Display categorized text from multi-agent RAG */}
+                  {(() => {
+                    console.log('🎨 Rendering Summary Section')
+                    console.log('🎨 docSummary:', docSummary)
+                    console.log('🎨 docSummary.keyPoints:', docSummary?.keyPoints)
+                    console.log('🎨 Condition check:', docSummary.keyPoints && docSummary.keyPoints.length > 0 && docSummary.keyPoints[0])
+                    return null
+                  })()}
                   {docSummary.keyPoints && docSummary.keyPoints.length > 0 && docSummary.keyPoints[0] ? (
                     <div style={{
                       padding: '24px',
@@ -877,7 +889,25 @@ function App() {
                         {docSummary.keyPoints[0]}
                       </div>
                     </div>
-                  ) : null}
+                  ) : (
+                    <div style={{
+                      padding: '24px',
+                      background: '#fef3c7',
+                      border: '1px solid #fbbf24',
+                      borderRadius: '8px',
+                      marginBottom: '20px'
+                    }}>
+                      <div style={{ fontSize: '14px', color: '#92400e' }}>
+                        ⚠️ Debug: keyPoints not rendering
+                        <br />
+                        keyPoints exists: {docSummary.keyPoints ? 'Yes' : 'No'}
+                        <br />
+                        keyPoints length: {docSummary.keyPoints?.length || 0}
+                        <br />
+                        keyPoints[0] exists: {docSummary.keyPoints?.[0] ? 'Yes' : 'No'}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Key Findings - Compact */}
                   {docSummary.keyPoints && docSummary.keyPoints.length > 0 && (
