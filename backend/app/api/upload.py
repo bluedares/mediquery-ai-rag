@@ -157,6 +157,10 @@ async def upload_document(
         # Generate embeddings and index in vector database
         logger.info("🔢 Generating embeddings", request_id=request_id)
         
+        # Batch generate all embeddings at once (much faster)
+        chunk_texts = [chunk['text'] for chunk in text_chunks]
+        embeddings = await embedding_service.encode(chunk_texts)
+        
         # Choose vector database based on configuration
         if settings.use_chromadb:
             logger.info("� Using ChromaDB for vector storage", request_id=request_id)
@@ -166,16 +170,13 @@ async def upload_document(
             chromadb_svc = get_chromadb_service()
             collection_name = f"medical-docs-{document_id}"
             
-            for chunk in text_chunks:
-                # Generate embedding
-                embedding = await embedding_service.encode_single(chunk['text'])
-                
-                # Index in ChromaDB
+            for i, chunk in enumerate(text_chunks):
+                # Index in ChromaDB with pre-generated embedding
                 chromadb_svc.index_document(
                     collection_name=collection_name,
                     doc_id=f"{document_id}_{chunk['chunk_id']}",
                     text=chunk['text'],
-                    embedding=embedding,
+                    embedding=embeddings[i],
                     metadata={
                         'document_id': document_id,
                         'page': chunk['page'],
@@ -186,16 +187,13 @@ async def upload_document(
         else:
             logger.info("📊 Using OpenSearch for vector storage", request_id=request_id)
             
-            for chunk in text_chunks:
-                # Generate embedding
-                embedding = await embedding_service.encode_single(chunk['text'])
-                
-                # Index in OpenSearch
+            for i, chunk in enumerate(text_chunks):
+                # Index in OpenSearch with pre-generated embedding
                 opensearch_service.index_document(
                     index_name="medical-documents",
                     doc_id=f"{document_id}_{chunk['chunk_id']}",
                     text=chunk['text'],
-                    embedding=embedding,
+                    embedding=embeddings[i],
                     metadata={
                         'document_id': document_id,
                         'page': chunk['page'],
