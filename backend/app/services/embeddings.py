@@ -168,4 +168,5 @@ class EmbeddingService:
 
 
 # Global service instance
-embedding_service = EmbeddingService()
+# Commented out to prevent initialization on import - instantiate when needed
+# embedding_service = EmbeddingService()

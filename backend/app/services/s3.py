@@ -271,4 +271,5 @@ class S3Service:
 
 
 # Global service instance
-s3_service = S3Service()
+# Commented out to prevent initialization on import - instantiate when needed
+# s3_service = S3Service()
