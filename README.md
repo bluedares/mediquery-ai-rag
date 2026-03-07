@@ -7,7 +7,7 @@
 
 > **Production-grade healthcare LLM application demonstrating multi-agent RAG architecture with complete AWS deployment**
 
-Built for **Indegene Interview** | March 2026
+**MediQuery AI** | March 2026
 
 ---
 
@@ -294,7 +294,7 @@ k6 run tests/load/query-test.js
 
 ---
 
-## 🎯 Interview Demo
+## 🎯 Demo Guide
 
 ### **Demo Script**
 
@@ -325,45 +325,25 @@ k6 run tests/load/query-test.js
 
 ---
 
-## 🤝 Alignment with Indegene
-
-### **Company Focus**
-- ✅ Life sciences commercialization
-- ✅ Medical affairs automation
-- ✅ Clinical data intelligence
-- ✅ AI/ML for healthcare
-
-### **Technical Skills Demonstrated**
-- ✅ Python + FastAPI
-- ✅ LangChain + LangGraph
-- ✅ RAG architecture
-- ✅ AWS cloud deployment
-- ✅ Production-ready code
-- ✅ Healthcare domain knowledge
-
----
-
 ## 📝 License
 
-This project is built for interview demonstration purposes.
+This project is built for demonstration purposes.
 
 ---
 
 ## 👤 Author
 
-**Your Name**  
-Interview Project for Indegene  
+**MediQuery AI Team**  
+Healthcare AI Platform  
 March 2026
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **LangChain** for the excellent LLM orchestration framework
 - **Anthropic** for Claude 3.5 Sonnet
 - **AWS** for the cloud infrastructure
 - **HuggingFace** for open-source models
-- **Indegene** for the opportunity
 
 ---
 

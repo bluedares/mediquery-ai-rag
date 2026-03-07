@@ -1591,11 +1591,11 @@ function App() {
 
       {/* Footer */}
       <footer style={{
-        marginTop: '40px', paddingTop: '20px',
+        padding: '20px', marginTop: '40px',
         borderTop: '1px solid #e5e7eb', textAlign: 'center',
         fontSize: '12px', color: '#999'
       }}>
-        <p>Built for Indegene Interview • March 2026</p>
+        <p>MediQuery AI • Healthcare Document Analysis Platform</p>
         <p style={{ marginTop: '4px' }}>Backend: FastAPI + AWS Bedrock + OpenSearch + LangGraph</p>
       </footer>
     </div>

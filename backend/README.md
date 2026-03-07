@@ -240,4 +240,4 @@ aws lambda update-function-code \
 
 ## 📝 License
 
-Built for Indegene Interview - March 2026
+MediQuery AI - Healthcare Document Analysis Platform - March 2026
