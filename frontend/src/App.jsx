@@ -463,6 +463,7 @@ function App() {
 
                 <label
                   htmlFor="file-upload"
+                  className="mobile-text-sm"
                   style={{
                     display: 'inline-block',
                     padding: '12px 32px',
