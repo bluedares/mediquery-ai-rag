@@ -859,16 +859,31 @@ function App() {
                     
                     // Parse the text into sections
                     const parseSection = (marker, color, bgColor, borderColor) => {
-                      const regex = new RegExp(`${marker}\\s*\\*\\*([^:]+):\\*\\*([^]*?)(?=\\n\\n[✅⚠️❗]|\\n\\nThe lab|$)`, 'i')
-                      const match = text.match(regex)
+                      // More flexible regex to handle different formats:
+                      // ✅ **Normal:** or **✅ Normal Values:** or ✅ Normal:
+                      const regex = new RegExp(`(?:${marker}\\s*)?\\*\\*[^:]*${marker}[^:]*:\\*\\*([^]*?)(?=\\n\\n(?:[✅⚠️❗]|\\*\\*)|\\n\\n(?:The lab|Recommendation)|$)`, 'i')
+                      let match = text.match(regex)
+                      
+                      // Fallback: try simpler pattern
+                      if (!match) {
+                        const simpleRegex = new RegExp(`${marker}[^\\n]*\\n([^]*?)(?=\\n\\n[✅⚠️❗]|\\n\\n(?:The lab|Recommendation)|$)`, 'i')
+                        match = text.match(simpleRegex)
+                      }
+                      
                       if (!match) return null
                       
-                      const items = match[2].trim().split('\n').filter(line => line.trim().startsWith('•')).map(line => {
+                      const contentText = match[1] || match[0]
+                      const items = contentText.trim().split('\n').filter(line => line.trim().startsWith('•')).map(line => {
                         const cleaned = line.replace(/^•\s*/, '').trim()
                         return cleaned
                       })
                       
                       if (items.length === 0) return null
+                      
+                      // Extract section title from the marker line
+                      const titleMatch = text.match(new RegExp(`(?:${marker}\\s*)?\\*\\*([^:]+${marker}[^:]+):\\*\\*`, 'i'))
+                      const sectionTitle = titleMatch ? titleMatch[1].replace(marker, '').trim() : 
+                                          (marker === '✅' ? 'Normal' : marker === '⚠️' ? 'Borderline/Needs Monitoring' : 'Abnormal/Needs Attention')
                       
                       return (
                         <div key={marker} style={{
@@ -888,7 +903,7 @@ function App() {
                             gap: '8px'
                           }}>
                             <span style={{ fontSize: '20px' }}>{marker}</span>
-                            <span>{match[1]}</span>
+                            <span>{sectionTitle}</span>
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {items.map((item, i) => (
@@ -945,40 +960,7 @@ function App() {
                     )
                   })()}
 
-                  {/* Key Findings - Compact */}
-                  {docSummary.keyPoints && docSummary.keyPoints.length > 0 && (
-                    <div style={{
-                      padding: '20px',
-                      background: '#eff6ff',
-                      border: '1px solid #bfdbfe',
-                      borderRadius: '8px',
-                      marginBottom: '16px'
-                    }}>
-                      <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', color: '#1e40af' }}>
-                        🔍 Key Findings
-                      </h4>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {docSummary.keyPoints.slice(0, 4).map((point, i) => (
-                          <div key={i} style={{
-                            display: 'flex',
-                            alignItems: 'start',
-                            gap: '10px',
-                            fontSize: '13px',
-                            color: '#1e40af',
-                            lineHeight: '1.5'
-                          }}>
-                            <span style={{ fontWeight: '700', minWidth: '20px' }}>•</span>
-                            <span>{point}</span>
-                          </div>
-                        ))}
-                        {docSummary.keyPoints.length > 4 && (
-                          <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', fontStyle: 'italic' }}>
-                            +{docSummary.keyPoints.length - 4} more findings...
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  {/* Removed duplicate Key Findings section - summary is now displayed in visual cards above */}
 
                   {/* Document Metadata - Compact */}
                   <div style={{
