@@ -1,0 +1,4 @@
+# This file is a placeholder to indicate backend-specific deployment
+# Railway will only rebuild backend service when files in backend/ or root config files change
+# Configure this in Railway dashboard: Settings -> Deploy -> Watch Paths
+# Set to: backend/** railway.json Dockerfile requirements.txt nixpacks.toml

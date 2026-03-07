@@ -1,0 +1,4 @@
+# This file is a placeholder to indicate frontend-specific deployment  
+# Railway will only rebuild frontend service when files in frontend/ change
+# Configure this in Railway dashboard: Settings -> Deploy -> Watch Paths
+# Set to: frontend/**
