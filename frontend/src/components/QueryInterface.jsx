@@ -3,7 +3,7 @@ import axios from 'axios'
 import { Send, FileText, Loader2, CheckCircle, XCircle } from 'lucide-react'
 import AnswerDisplay from './AnswerDisplay'
 
-const API_URL = 'http://localhost:8000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export default function QueryInterface({ onResult, loading, setLoading }) {
   const [query, setQuery] = useState('')
