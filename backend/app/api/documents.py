@@ -214,32 +214,33 @@ async def get_document_summary(document_id: str):
                 pages_set.add(result['metadata']['page'])
         
         # Generate summary using Claude
-        prompt = f"""Analyze this medical/lab report and extract health information.
+        prompt = f"""Analyze this medical report and extract all measurable health information.
 
 Medical Report:
 {full_text[:4000]}
 
 INSTRUCTIONS:
-1. Identify report type (e.g., "HB Electrophoresis", "Complete Blood Count", "Lipid Panel", "Thyroid Test", etc.)
-2. Brief 1-2 sentence description
-3. Extract test results as health indicators:
-   - For percentage values (like Hb A 84.4%): use the percentage as value
-   - For numeric results: use the actual number
-   - For each metric, determine status based on reference ranges if provided
-4. If reference ranges are in the report, use them to determine status:
-   - Within range = "good" (green: #10b981)
-   - Slightly outside = "moderate" (yellow: #f59e0b)
-   - Significantly outside = "needs attention" (red: #ef4444)
-5. Extract 3-5 key findings including test interpretations if present
-6. Overall score should reflect the general health status from the report
+1. Identify what type of medical report this is (blood test, imaging scan, pathology, etc.)
+2. Write a brief 1-2 sentence description of what this report evaluates
+3. Extract ALL measurable test results, findings, or metrics as health indicators:
+   - Include any numeric values with their test names
+   - Include percentages, measurements, counts, levels, scores, etc.
+   - Use the actual values from the report
+4. For each metric, determine status using reference ranges if provided in the report:
+   - Within normal range = "good" (green: #10b981)
+   - Borderline/slightly abnormal = "moderate" (yellow: #f59e0b)
+   - Abnormal/concerning = "needs attention" (red: #ef4444)
+   - If no reference range provided, use "moderate" (blue: #3b82f6)
+5. Extract 3-5 key findings, interpretations, or clinical notes from the report
+6. Set overall score based on the general health status indicated in the report
 
-Return ONLY valid JSON (no markdown, no code blocks):
+Return ONLY valid JSON (no markdown, no code blocks, no explanations):
 
 {{
-    "report_type": "Test Type",
-    "report_description": "Brief description of what this test measures",
+    "report_type": "Type of medical report",
+    "report_description": "What this report evaluates",
     "health_indicators": [
-        {{"name": "Test Name", "value": 85, "status": "good", "color": "#10b981"}}
+        {{"name": "Test/Metric Name", "value": 85, "status": "good", "color": "#10b981"}}
     ],
     "overall_score": "Good",
     "overall_color": "#10b981",
@@ -315,16 +316,20 @@ Return ONLY valid JSON (no markdown, no code blocks):
             key_findings = []
             health_indicators = []
             
-            # Try to extract test results (name: value pattern)
+            # Try to extract test results from various medical report formats
             for result in search_results[:20]:
                 text = result.get('text', '').strip()
                 if not text:
                     continue
                 
-                # Look for test result patterns like "Hb A: 84.4" or "Hemoglobin 12.5 g/dL"
+                # Look for various test result patterns across different medical report types
                 test_patterns = [
-                    r'([A-Za-z][A-Za-z0-9\s]+?)\s*[:=]\s*([LH]?\s*[\d.]+)\s*(%|g/dL|mg/dL|mmol/L|U/L|cells/cumm)?',
-                    r'([A-Za-z][A-Za-z0-9\s]+?)\s+([\d.]+)\s*(%|g/dL|mg/dL|mmol/L|U/L|cells/cumm)',
+                    # Pattern: "Test Name: 84.4" or "Test Name = 84.4"
+                    r'([A-Za-z][A-Za-z0-9\s\(\)]+?)\s*[:=]\s*([LH]?\s*[\d.]+)\s*(%|g/dL|mg/dL|mmol/L|U/L|cells/cumm|mm|cm|kg|lbs|bpm|mmHg)?',
+                    # Pattern: "Test Name 84.4 unit"
+                    r'([A-Za-z][A-Za-z0-9\s\(\)]+?)\s+([\d.]+)\s*(%|g/dL|mg/dL|mmol/L|U/L|cells/cumm|mm|cm|kg|lbs|bpm|mmHg)',
+                    # Pattern: "Test Name\nResult: 84.4"
+                    r'([A-Za-z][A-Za-z0-9\s\(\)]+?)\s*\n\s*(?:Result|Value)?\s*[:=]?\s*([\d.]+)',
                 ]
                 
                 for pattern in test_patterns:
