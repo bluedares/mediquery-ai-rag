@@ -214,52 +214,37 @@ async def get_document_summary(document_id: str):
                 pages_set.add(result['metadata']['page'])
         
         # Generate summary using Claude
-        prompt = f"""You are a medical report analyzer. Analyze this report and identify ALL abnormal test results.
+        prompt = f"""Analyze this medical report and extract health information.
 
 Medical Report:
 {full_text[:4000]}
 
-CRITICAL INSTRUCTIONS - READ CAREFULLY:
+Instructions:
+1. Identify the report type
+2. Extract ALL test results with their actual values
+3. For each test, compare value to reference range if provided:
+   - Below range or marked "L" = "needs attention" (red: #ef4444)
+   - Above range or marked "H" = "needs attention" (red: #ef4444)
+   - Borderline = "moderate" (yellow: #f59e0b)
+   - Within range = "good" (green: #10b981)
+4. Extract key findings from the report
+5. Set overall_score based on worst indicator:
+   - Any red → "Needs Attention" (#ef4444)
+   - Any yellow but no red → "Moderate" (#f59e0b)
+   - All green → "Good" (#10b981)
 
-1. Identify the report type (blood test, imaging, pathology, etc.)
-
-2. Extract ALL test results with their values and reference ranges
-
-3. For EACH test result, you MUST:
-   a) Compare the actual value to the reference range provided in the report
-   b) Determine if it's LOW, HIGH, or NORMAL
-   c) Assign the correct status:
-      - If value is BELOW the lower limit of reference range → status: "needs attention", color: "#ef4444"
-      - If value is ABOVE the upper limit of reference range → status: "needs attention", color: "#ef4444"
-      - If value is at the edge of reference range (borderline) → status: "moderate", color: "#f59e0b"
-      - If value is within normal reference range → status: "good", color: "#10b981"
-
-4. IMPORTANT: Look for markers like "L" (Low) or "H" (High) next to values - these indicate abnormal results
-
-5. Extract key findings including any interpretations or recommendations from the report
-
-6. Calculate overall_score based on the WORST finding:
-   - If ANY test is "needs attention" (red) → overall_score: "Needs Attention", overall_color: "#ef4444"
-   - If ANY test is "moderate" (yellow) but none red → overall_score: "Moderate", overall_color: "#f59e0b"  
-   - ONLY if ALL tests are "good" (green) → overall_score: "Good", overall_color: "#10b981"
-
-EXAMPLE:
-If Hemoglobin is 12.5 g/dL and reference range is 13.0-17.0 g/dL:
-- This is LOW (below 13.0)
-- Status should be "needs attention", color "#ef4444"
-- Overall score should be "Needs Attention"
-
-Return ONLY valid JSON:
+Return ONLY valid JSON (no markdown, no explanations):
 
 {{
-    "report_type": "Type of report",
-    "report_description": "Brief description",
+    "report_type": "Blood Test",
+    "report_description": "Complete blood count analysis",
     "health_indicators": [
-        {{"name": "Test Name", "value": 12.5, "status": "needs attention", "color": "#ef4444"}}
+        {{"name": "Hemoglobin", "value": 12.5, "status": "needs attention", "color": "#ef4444"}},
+        {{"name": "WBC Count", "value": 9000, "status": "good", "color": "#10b981"}}
     ],
     "overall_score": "Needs Attention",
     "overall_color": "#ef4444",
-    "key_findings": ["Finding 1", "Finding 2"]
+    "key_findings": ["Low hemoglobin detected", "WBC count normal"]
 }}"""
 
         # Choose LLM service based on configuration
