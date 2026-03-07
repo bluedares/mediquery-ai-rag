@@ -753,11 +753,6 @@ function App() {
                     <h2 style={{ fontSize: '22px', fontWeight: '600', marginBottom: '6px', color: '#111827' }}>
                       {docSummary.reportType || 'Document Processed Successfully!'}
                     </h2>
-                    {docSummary.reportDescription && (
-                      <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '8px', lineHeight: '1.5' }}>
-                        {docSummary.reportDescription}
-                      </p>
-                    )}
                     <p style={{ color: '#9ca3af', fontSize: '13px' }}>📄 {docSummary.title}</p>
                   </div>
 
