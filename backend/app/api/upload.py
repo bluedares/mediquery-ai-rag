@@ -71,10 +71,6 @@ async def upload_document(
         pages=0,
         chunks=0
     )
-    
-    # Original code below - commented out for demo
-    """
-    # Check document limit (free tier: 50 documents)
     current_count = await get_document_count()
     if current_count >= MAX_DOCUMENTS:
         logger.warning(
