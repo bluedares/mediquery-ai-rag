@@ -10,9 +10,9 @@ from contextlib import asynccontextmanager
 import time
 from datetime import datetime
 
-from app.config import settings
-from app.utils.logger import logger
-from app.models.responses import HealthResponse
+from .config import settings
+from .utils.logger import logger
+from .models.responses import HealthResponse
 
 
 # Lifespan context manager for startup/shutdown
@@ -167,7 +167,7 @@ async def root():
 
 
 # Import routers
-from app.api import health, upload, query, documents, storage
+from .api import health, upload, query, documents, storage
 
 # Include routers
 app.include_router(health.router, prefix=settings.api_prefix, tags=["Health"])

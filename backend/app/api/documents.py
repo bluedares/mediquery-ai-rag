@@ -7,21 +7,21 @@ from typing import List
 from datetime import datetime
 import re
 
-from app.models.responses import BaseModel
-from app.services import opensearch_service, s3_service, bedrock_service
-from app.config import settings
-from app.utils.logger import logger
+from ..models.responses import BaseModel
+from ..services import opensearch_service, s3_service, bedrock_service
+from ..config import settings
+from ..utils.logger import logger
 
 # Import Claude direct API service (used when USE_DIRECT_ANTHROPIC=true)
 try:
-    from app.services.claude import get_claude_service
+    from ..services.claude import get_claude_service
     claude_available = True
 except ImportError:
     claude_available = False
 
 # Import ChromaDB service (used when USE_CHROMADB=true)
 try:
-    from app.services.chromadb_service import get_chromadb_service
+    from ..services.chromadb_service import get_chromadb_service
     chromadb_available = True
 except ImportError:
     chromadb_available = False
@@ -89,7 +89,7 @@ async def list_documents():
                 
                 # Get metadata from OpenSearch (count chunks and pages)
                 try:
-                    from app.services import embedding_service
+                    from ..services import embedding_service
                     dummy_embedding = await embedding_service.encode_single("document")
                     
                     # Choose vector database based on configuration
@@ -169,7 +169,7 @@ async def get_document_summary(document_id: str):
         )
         
         # Retrieve all chunks for this document from vector database
-        from app.services import embedding_service
+        from ..services import embedding_service
         dummy_embedding = await embedding_service.encode_single("medical report summary")
         
         # Choose vector database based on configuration

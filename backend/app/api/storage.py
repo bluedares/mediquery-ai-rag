@@ -5,12 +5,12 @@ Storage API - Storage Statistics and Limits
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from app.config import settings
-from app.utils.logger import logger
+from ..config import settings
+from ..utils.logger import logger
 
 # Import ChromaDB service
 try:
-    from app.services.chromadb_service import get_chromadb_service
+    from ..services.chromadb_service import get_chromadb_service
     chromadb_available = True
 except ImportError:
     chromadb_available = False

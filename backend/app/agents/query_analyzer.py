@@ -3,9 +3,9 @@ Query Analyzer Agent - Intent Classification and Strategy Selection
 """
 
 import time
-from app.agents.graph import AgentState
-from app.utils.tracing import tracer
-from app.utils.logger import logger
+from .graph import AgentState
+from ..utils.tracing import tracer
+from ..utils.logger import logger
 
 
 @tracer.trace_agent("QueryAnalyzerAgent")

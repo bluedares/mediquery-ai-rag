@@ -6,8 +6,8 @@ import time
 import functools
 import uuid
 from typing import Any, Callable, Dict, List
-from app.config import settings
-from app.utils.logger import logger
+from ..config import settings
+from .logger import logger
 
 
 class AgentTracer:

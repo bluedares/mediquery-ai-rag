@@ -8,8 +8,8 @@ from chromadb.config import Settings
 from typing import List, Dict, Optional, Any
 import os
 
-from app.config import settings
-from app.utils.logger import logger
+from ..config import settings
+from ..utils.logger import logger
 
 
 class ChromaDBService:

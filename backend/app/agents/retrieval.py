@@ -4,15 +4,15 @@ Retrieval Agent - Document Chunk Retrieval
 
 import time
 from typing import List, Dict
-from app.agents.graph import AgentState
-from app.utils.tracing import tracer
-from app.utils.logger import logger
-from app.services import opensearch_service, embedding_service
-from app.config import settings
+from .graph import AgentState
+from ..utils.tracing import tracer
+from ..utils.logger import logger
+from ..services import opensearch_service, embedding_service
+from ..config import settings
 
 # Import ChromaDB service (used when USE_CHROMADB=true)
 try:
-    from app.services.chromadb_service import get_chromadb_service
+    from ..services.chromadb_service import get_chromadb_service
     chromadb_available = True
 except ImportError:
     chromadb_available = False

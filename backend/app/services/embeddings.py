@@ -7,8 +7,8 @@ from typing import List, Optional
 from sentence_transformers import SentenceTransformer
 import numpy as np
 
-from app.config import settings
-from app.utils.logger import logger
+from ..config import settings
+from ..utils.logger import logger
 
 
 class EmbeddingService:

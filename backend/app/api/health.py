@@ -5,10 +5,10 @@ Health Check API - System Status
 from fastapi import APIRouter
 from datetime import datetime
 
-from app.models.responses import HealthResponse
-from app.config import settings
-from app.services import bedrock_service, opensearch_service, s3_service, embedding_service
-from app.utils.logger import logger
+from ..models.responses import HealthResponse
+from ..config import settings
+from ..services import bedrock_service, opensearch_service, s3_service, embedding_service
+from ..utils.logger import logger
 
 router = APIRouter()
 

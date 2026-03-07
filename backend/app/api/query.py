@@ -6,10 +6,10 @@ from fastapi import APIRouter, HTTPException, status
 import uuid
 import time
 
-from app.models.requests import QueryRequest
-from app.models.responses import QueryResponse, Citation, AgentTraceEntry
-from app.agents import agent_graph
-from app.utils.logger import logger
+from ..models.requests import QueryRequest
+from ..models.responses import QueryResponse, Citation, AgentTraceEntry
+from ..agents import agent_graph
+from ..utils.logger import logger
 
 router = APIRouter()
 

@@ -3,15 +3,15 @@ Synthesis Agent - Answer Generation with Citations
 """
 
 import time
-from app.agents.graph import AgentState
-from app.utils.tracing import tracer
-from app.utils.logger import logger
-from app.services import bedrock_service
-from app.config import settings
+from .graph import AgentState
+from ..utils.tracing import tracer
+from ..utils.logger import logger
+from ..services import bedrock_service
+from ..config import settings
 
 # Import Claude direct API service (used when USE_DIRECT_ANTHROPIC=true)
 try:
-    from app.services.claude import get_claude_service
+    from ..services.claude import get_claude_service
     claude_available = True
 except ImportError:
     claude_available = False

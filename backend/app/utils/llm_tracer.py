@@ -3,8 +3,8 @@ LLM Call Tracer with Cost Estimation
 """
 
 from typing import Optional
-from app.config import settings
-from app.utils.logger import logger
+from ..config import settings
+from .logger import logger
 
 
 class LLMTracer:

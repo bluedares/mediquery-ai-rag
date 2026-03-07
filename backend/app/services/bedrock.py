@@ -8,9 +8,9 @@ import time
 from typing import AsyncGenerator, Optional, Dict, Any
 from botocore.exceptions import ClientError
 
-from app.config import settings
-from app.utils.logger import logger
-from app.utils.llm_tracer import llm_tracer
+from ..config import settings
+from ..utils.logger import logger
+from ..utils.llm_tracer import llm_tracer
 
 
 class BedrockService:

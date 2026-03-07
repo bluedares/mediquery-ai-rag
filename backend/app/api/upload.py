@@ -8,14 +8,14 @@ import uuid
 import PyPDF2
 import io
 
-from app.models.responses import UploadResponse
-from app.services import s3_service, opensearch_service, embedding_service
-from app.config import settings
-from app.utils.logger import logger
+from ..models.responses import UploadResponse
+from ..services import s3_service, opensearch_service, embedding_service
+from ..config import settings
+from ..utils.logger import logger
 
 # Import ChromaDB service (used when USE_CHROMADB=true)
 try:
-    from app.services.chromadb_service import get_chromadb_service
+    from ..services.chromadb_service import get_chromadb_service
     chromadb_available = True
 except ImportError:
     chromadb_available = False

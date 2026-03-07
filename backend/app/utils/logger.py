@@ -7,7 +7,7 @@ import logging
 import sys
 from pathlib import Path
 from typing import Any
-from app.config import settings
+from ..config import settings
 
 
 def setup_logging() -> structlog.BoundLogger:

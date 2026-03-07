@@ -60,10 +60,10 @@ def create_agent_graph():
     Returns:
         Compiled StateGraph
     """
-    from app.agents.query_analyzer import query_analyzer_agent
-    from app.agents.retrieval import retrieval_agent
-    from app.agents.reranking import reranking_agent
-    from app.agents.synthesis import synthesis_agent
+    from .query_analyzer import query_analyzer_agent
+    from .retrieval import retrieval_agent
+    from .reranking import reranking_agent
+    from .synthesis import synthesis_agent
     
     # Create graph
     graph = StateGraph(AgentState)

@@ -4,10 +4,10 @@ Reranking Agent - Cross-Encoder Reranking
 
 import time
 from typing import List, Tuple
-from app.agents.graph import AgentState
-from app.utils.tracing import tracer
-from app.utils.logger import logger
-from app.config import settings
+from .graph import AgentState
+from ..utils.tracing import tracer
+from ..utils.logger import logger
+from ..config import settings
 
 
 @tracer.trace_agent("RerankingAgent")

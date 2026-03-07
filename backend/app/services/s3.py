@@ -7,8 +7,8 @@ from typing import Optional, BinaryIO
 from botocore.exceptions import ClientError
 import io
 
-from app.config import settings
-from app.utils.logger import logger
+from ..config import settings
+from ..utils.logger import logger
 
 
 class S3Service:

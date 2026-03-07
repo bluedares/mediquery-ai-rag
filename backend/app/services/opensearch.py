@@ -7,8 +7,8 @@ from opensearchpy import OpenSearch
 from opensearchpy.exceptions import NotFoundError, RequestError
 import asyncio
 
-from app.config import settings
-from app.utils.logger import logger
+from ..config import settings
+from ..utils.logger import logger
 
 
 class OpenSearchService:
