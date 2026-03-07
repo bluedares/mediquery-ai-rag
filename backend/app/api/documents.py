@@ -220,8 +220,8 @@ Medical Report:
 {full_text[:4000]}
 
 Instructions:
-1. Identify the report type
-2. Extract ALL test results with their actual values
+1. Identify the report type (blood test, imaging, pathology, etc.)
+2. Extract ALL test results with their ACTUAL values from the report above
 3. For each test, compare value to reference range if provided:
    - Below range or marked "L" = "needs attention" (red: #ef4444)
    - Above range or marked "H" = "needs attention" (red: #ef4444)
@@ -233,18 +233,19 @@ Instructions:
    - Any yellow but no red → "Moderate" (#f59e0b)
    - All green → "Good" (#10b981)
 
-Return ONLY valid JSON (no markdown, no explanations):
+IMPORTANT: Use ACTUAL data from the report above. Do NOT use example values.
+
+Return ONLY valid JSON in this format:
 
 {{
-    "report_type": "Blood Test",
-    "report_description": "Complete blood count analysis",
+    "report_type": "<actual report type>",
+    "report_description": "<what this report evaluates>",
     "health_indicators": [
-        {{"name": "Hemoglobin", "value": 12.5, "status": "needs attention", "color": "#ef4444"}},
-        {{"name": "WBC Count", "value": 9000, "status": "good", "color": "#10b981"}}
+        {{"name": "<actual test name>", "value": <actual numeric value>, "status": "<actual status>", "color": "<actual color>"}}
     ],
-    "overall_score": "Needs Attention",
-    "overall_color": "#ef4444",
-    "key_findings": ["Low hemoglobin detected", "WBC count normal"]
+    "overall_score": "<actual score>",
+    "overall_color": "<actual color>",
+    "key_findings": ["<actual finding 1>", "<actual finding 2>"]
 }}"""
 
         # Choose LLM service based on configuration
