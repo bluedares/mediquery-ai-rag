@@ -9,8 +9,7 @@ import PyPDF2
 import io
 
 from ..models.responses import UploadResponse
-# Commented out for demo - AWS services not needed
-# from ..services import s3_service, opensearch_service, embedding_service
+from ..services import s3_service, opensearch_service, embedding_service
 from ..config import settings
 from ..utils.logger import logger
 

@@ -168,5 +168,4 @@ class EmbeddingService:
 
 
 # Global service instance
-# Commented out to prevent initialization on import - instantiate when needed
-# embedding_service = EmbeddingService()
+embedding_service = EmbeddingService()

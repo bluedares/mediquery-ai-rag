@@ -7,8 +7,7 @@ from typing import List, Dict
 from .graph import AgentState
 from ..utils.tracing import tracer
 from ..utils.logger import logger
-# Commented out for demo - AWS services not needed
-# from ..services import opensearch_service, embedding_service
+from ..services import opensearch_service, embedding_service
 from ..config import settings
 
 # Import ChromaDB service (used when USE_CHROMADB=true)

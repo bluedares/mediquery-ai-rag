@@ -359,5 +359,4 @@ class BedrockService:
 
 
 # Global service instance
-# Commented out to prevent initialization on import - instantiate when needed
-# bedrock_service = BedrockService()
+bedrock_service = BedrockService()
