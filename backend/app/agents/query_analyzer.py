@@ -14,9 +14,10 @@ async def query_analyzer_agent(state: AgentState) -> AgentState:
     Analyze user query to determine intent and search strategy
     
     Responsibilities:
-    1. Classify query intent (factual, comparison, enumeration, etc.)
-    2. Determine optimal search strategy (semantic, keyword, hybrid)
-    3. Optionally expand query with synonyms
+    1. Validate query is medical/report-related
+    2. Classify query intent (factual, comparison, enumeration, etc.)
+    3. Determine optimal search strategy (semantic, keyword, hybrid)
+    4. Optionally expand query with synonyms
     
     Args:
         state: Current agent state
@@ -33,6 +34,43 @@ async def query_analyzer_agent(state: AgentState) -> AgentState:
         query_length=len(query),
         trace_id=state['request_id']
     )
+    
+    # Validate query is medical/report-related
+    query_lower = query.lower()
+    
+    # Medical/health-related keywords
+    medical_keywords = [
+        'test', 'result', 'report', 'value', 'level', 'count', 'blood', 'glucose', 
+        'cholesterol', 'hemoglobin', 'platelet', 'wbc', 'rbc', 'pressure', 'heart',
+        'kidney', 'liver', 'thyroid', 'diabetes', 'anemia', 'infection', 'disease',
+        'normal', 'abnormal', 'high', 'low', 'range', 'reference', 'health', 'medical',
+        'doctor', 'diagnosis', 'symptom', 'treatment', 'medication', 'lab', 'clinical',
+        'patient', 'finding', 'analysis', 'interpretation', 'concern', 'risk', 'condition',
+        'name', 'age', 'gender', 'date', 'hospital', 'clinic', 'physician'
+    ]
+    
+    # Check if query contains any medical keywords
+    is_medical = any(keyword in query_lower for keyword in medical_keywords)
+    
+    # If not medical-related, reject the query
+    if not is_medical:
+        logger.warning(
+            "⚠️ Non-medical query detected",
+            query=query,
+            trace_id=state['request_id']
+        )
+        state['intent'] = 'non_medical'
+        state['search_strategy'] = 'none'
+        state['expanded_query'] = None
+        state['final_answer'] = "I can only answer questions related to your medical report. Please ask about your test results, health values, or medical findings."
+        state['citations'] = []
+        state['confidence'] = 0.0
+        # Skip retrieval and synthesis by setting empty chunks
+        state['retrieved_chunks'] = []
+        state['retrieval_scores'] = []
+        state['reranked_chunks'] = []
+        state['rerank_scores'] = []
+        return state
     
     # Intent classification (rule-based for now, can use LLM for complex cases)
     query_lower = query.lower()
