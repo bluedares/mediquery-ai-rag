@@ -8,7 +8,8 @@ from datetime import datetime
 import re
 
 from ..models.responses import BaseModel
-from ..services import opensearch_service, s3_service, bedrock_service
+# Commented out for demo - AWS services not needed
+# from ..services import opensearch_service, s3_service, bedrock_service
 from ..config import settings
 from ..utils.logger import logger
 
@@ -74,10 +75,14 @@ async def list_documents():
         DocumentListResponse with list of documents
     """
     try:
-        logger.info("📋 Listing documents from S3")
+        logger.info("📋 Listing documents (demo mode - returning empty list)")
         
+        # For demo: return empty list since S3 is not configured
+        return DocumentListResponse(documents=[], total=0)
+        
+        # Original code commented out for demo
         # List all files in documents/ prefix
-        files = await s3_service.list_files(prefix="documents/")
+        # files = await s3_service.list_files(prefix="documents/")
         
         documents = []
         for file_key in files:

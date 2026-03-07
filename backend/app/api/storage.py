@@ -42,12 +42,14 @@ async def get_storage_stats():
     Returns:
         StorageStats with current usage and limits
     """
-    # Get document count
+    # For demo: return simple stats
     doc_count = 0
-    if settings.use_chromadb and chromadb_available:
-        try:
-            chromadb_svc = get_chromadb_service()
-            collections = chromadb_svc.client.list_collections()
+    
+    # Original ChromaDB code commented out for demo
+    # if settings.use_chromadb and chromadb_available:
+    #     try:
+    #         chromadb_svc = get_chromadb_service()
+    #         collections = chromadb_svc.client.list_collections()
             doc_collections = [c for c in collections if c.name.startswith('medical-docs-')]
             doc_count = len(doc_collections)
         except Exception as e:

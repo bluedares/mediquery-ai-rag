@@ -7,7 +7,8 @@ from datetime import datetime
 
 from ..models.responses import HealthResponse
 from ..config import settings
-from ..services import bedrock_service, opensearch_service, s3_service, embedding_service
+# Commented out for demo - AWS services not needed
+# from ..services import bedrock_service, opensearch_service, s3_service, embedding_service
 from ..utils.logger import logger
 
 router = APIRouter()
