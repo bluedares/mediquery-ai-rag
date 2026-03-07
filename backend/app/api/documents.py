@@ -232,7 +232,10 @@ INSTRUCTIONS:
    - Abnormal/concerning = "needs attention" (red: #ef4444)
    - If no reference range provided, use "moderate" (blue: #3b82f6)
 5. Extract 3-5 key findings, interpretations, or clinical notes from the report
-6. Set overall score based on the general health status indicated in the report
+6. Set overall score based on the worst indicator status:
+   - If ANY indicator is "needs attention" (red) → overall_score: "Needs Attention", overall_color: "#ef4444"
+   - If ANY indicator is "moderate" (yellow) but none red → overall_score: "Moderate", overall_color: "#f59e0b"
+   - If ALL indicators are "good" (green) → overall_score: "Good", overall_color: "#10b981"
 
 Return ONLY valid JSON (no markdown, no code blocks, no explanations):
 
@@ -379,13 +382,33 @@ Return ONLY valid JSON (no markdown, no code blocks, no explanations):
             if not key_findings:
                 key_findings = ["Medical report uploaded successfully", "Use Q&A below to ask specific questions about your test results"]
             
+            # Determine overall score based on extracted indicators
+            overall_score = "Good"
+            overall_color = "#10b981"
+            
+            if unique_indicators:
+                # Check if any indicators have concerning status
+                has_red = any(ind.get('color') == '#ef4444' for ind in unique_indicators)
+                has_yellow = any(ind.get('color') == '#f59e0b' for ind in unique_indicators)
+                
+                if has_red:
+                    overall_score = "Needs Attention"
+                    overall_color = "#ef4444"
+                elif has_yellow:
+                    overall_score = "Moderate"
+                    overall_color = "#f59e0b"
+            else:
+                # No indicators extracted - neutral status
+                overall_score = "Moderate"
+                overall_color = "#3b82f6"
+            
             # Fallback summary with extracted data
             summary_data = {
                 "report_type": "Medical Test Report",
                 "report_description": "Laboratory test results and medical analysis",
                 "health_indicators": unique_indicators[:10],  # Limit to 10
-                "overall_score": "Analysis Available",
-                "overall_color": "#3b82f6",
+                "overall_score": overall_score,
+                "overall_color": overall_color,
                 "key_findings": key_findings[:5]  # Limit to 5
             }
         
