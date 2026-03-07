@@ -181,6 +181,7 @@ function App() {
   }
 
   const handleUpload = async (e) => {
+    console.log('📤 Starting file upload:', e.target.files[0].name)
     const file = e.target.files[0]
     if (!file) return
 
@@ -199,8 +200,15 @@ function App() {
       timeouts.push(setTimeout(() => setUploadProgress('analyzing'), 3000))
 
       const response = await axios.post(`${API_URL}/api/v1/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          setUploadProgress({ percent, status: 'Uploading...' })
+        }
       })
+
+      console.log('✅ Upload response:', response.data)
+      setUploadProgress({ percent: 100, status: 'Processing...' })
 
       // Go directly to generating summary (skip 'ready' state)
       setUploadProgress('generating_summary')
