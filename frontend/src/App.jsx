@@ -248,17 +248,40 @@ function App() {
           console.log('🔍 keyPoints type:', typeof summary.keyPoints)
           console.log('🔍 keyPoints is array:', Array.isArray(summary.keyPoints))
           
-          setUploadedDoc({
-            id: response.data.document_id,
-            filename: response.data.filename,
-            pages: summaryResponse.data.pages,
-            chunks: summaryResponse.data.chunks
-          })
-          setDocSummary(summary)
-          setShowSummary(true)
-          setUploadProgress(null)
-          setError(null)
-          setLoading(false)
+          // Check if the response indicates an error or inability to analyze
+          const summaryText = summary.keyPoints?.[0] || ''
+          const isErrorResponse = summaryText.toLowerCase().includes('cannot analyze') ||
+                                 summaryText.toLowerCase().includes('no readable data') ||
+                                 summaryText.toLowerCase().includes('blank') ||
+                                 summaryText.toLowerCase().includes('apologize') ||
+                                 summaryText.toLowerCase().includes("don't have enough information")
+          
+          if (isErrorResponse) {
+            // Show error message instead of summary
+            setUploadedDoc({
+              id: response.data.document_id,
+              filename: response.data.filename,
+              pages: response.data.pages,
+              chunks: response.data.chunks
+            })
+            setShowSummary(false)
+            setUploadProgress(null)
+            setError(summaryText || 'Unable to analyze this document. Please ensure the PDF contains readable medical test results with values and reference ranges.')
+            setLoading(false)
+          } else {
+            // Valid summary - show it
+            setUploadedDoc({
+              id: response.data.document_id,
+              filename: response.data.filename,
+              pages: summaryResponse.data.pages,
+              chunks: summaryResponse.data.chunks
+            })
+            setDocSummary(summary)
+            setShowSummary(true)
+            setUploadProgress(null)
+            setError(null)
+            setLoading(false)
+          }
           
           // Refresh document list
           fetchAvailableDocs()
