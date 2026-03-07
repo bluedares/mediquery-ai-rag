@@ -859,25 +859,96 @@ function App() {
                   </div>
 
                   {/* Test Results Analysis - Display categorized text from multi-agent RAG */}
-                  {docSummary.keyPoints?.[0] && (
-                    <div style={{
-                      padding: '24px',
-                      background: '#ffffff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      marginBottom: '20px'
-                    }}>
-                      <div style={{
-                        fontSize: '14px',
-                        lineHeight: '1.8',
-                        color: '#374151',
-                        whiteSpace: 'pre-wrap',
-                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                      }}>
-                        {docSummary.keyPoints[0]}
+                  {docSummary.keyPoints?.[0] && (() => {
+                    const text = docSummary.keyPoints[0]
+                    
+                    // Parse the text into sections
+                    const parseSection = (marker, color, bgColor, borderColor) => {
+                      const regex = new RegExp(`${marker}\\s*\\*\\*([^:]+):\\*\\*([^]*?)(?=\\n\\n[✅⚠️❗]|\\n\\nThe lab|$)`, 'i')
+                      const match = text.match(regex)
+                      if (!match) return null
+                      
+                      const items = match[2].trim().split('\n').filter(line => line.trim().startsWith('•')).map(line => {
+                        const cleaned = line.replace(/^•\s*/, '').trim()
+                        return cleaned
+                      })
+                      
+                      if (items.length === 0) return null
+                      
+                      return (
+                        <div key={marker} style={{
+                          padding: '16px',
+                          background: bgColor,
+                          border: `2px solid ${borderColor}`,
+                          borderRadius: '8px',
+                          marginBottom: '12px'
+                        }}>
+                          <div style={{
+                            fontSize: '15px',
+                            fontWeight: '700',
+                            color: color,
+                            marginBottom: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}>
+                            <span style={{ fontSize: '20px' }}>{marker}</span>
+                            <span>{match[1]}</span>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {items.map((item, i) => (
+                              <div key={i} style={{
+                                fontSize: '13px',
+                                lineHeight: '1.6',
+                                color: '#374151',
+                                paddingLeft: '8px',
+                                borderLeft: `3px solid ${color}`,
+                                background: 'white',
+                                padding: '8px 12px',
+                                borderRadius: '4px'
+                              }}>
+                                {item}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    }
+                    
+                    // Extract note at the end
+                    const noteMatch = text.match(/The lab recommends[^]*$/i)
+                    
+                    return (
+                      <div style={{ marginBottom: '20px' }}>
+                        <h3 style={{
+                          fontSize: '16px',
+                          fontWeight: '700',
+                          color: '#111827',
+                          marginBottom: '16px'
+                        }}>
+                          📋 Your Test Results Summary
+                        </h3>
+                        
+                        {parseSection('✅', '#059669', '#d1fae5', '#10b981')}
+                        {parseSection('⚠️', '#d97706', '#fef3c7', '#f59e0b')}
+                        {parseSection('❗', '#dc2626', '#fee2e2', '#ef4444')}
+                        
+                        {noteMatch && (
+                          <div style={{
+                            padding: '12px 16px',
+                            background: '#eff6ff',
+                            border: '1px solid #bfdbfe',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            color: '#1e40af',
+                            lineHeight: '1.6'
+                          }}>
+                            <strong>📌 Note:</strong> {noteMatch[0]}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
+                    )
+                  })()}
 
                   {/* Key Findings - Compact */}
                   {docSummary.keyPoints && docSummary.keyPoints.length > 0 && (
