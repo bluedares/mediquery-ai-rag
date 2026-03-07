@@ -36,7 +36,7 @@ class ClaudeService:
             model: Claude model name (defaults to settings)
         """
         self.api_key = api_key or settings.anthropic_api_key
-        self.model = model or settings.anthropic_model
+        self.model = model or os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
         
         if not self.api_key:
             raise ValueError("Anthropic API key is required. Set ANTHROPIC_API_KEY in .env")
