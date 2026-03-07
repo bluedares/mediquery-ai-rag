@@ -216,25 +216,8 @@ function App() {
       // Fetch AI-generated summary
       setTimeout(async () => {
         try {
+          console.log('🔄 Fetching summary for document:', response.data.document_id)
           const summaryResponse = await axios.get(`${API_URL}/api/v1/documents/${response.data.document_id}/summary`)
-          
-          // Check if we got valid health indicators
-          const hasHealthData = summaryResponse.data.health_indicators && 
-                                summaryResponse.data.health_indicators.length > 0
-          
-          if (!hasHealthData) {
-            // No medical data found - show error
-            setUploadedDoc({
-              id: response.data.document_id,
-              filename: response.data.filename,
-              pages: summaryResponse.data.pages,
-              chunks: summaryResponse.data.chunks
-            })
-            setUploadProgress(null)
-            setError("Couldn't find any medical analysis in this document. Please try uploading a different medical report with health metrics like blood tests, vitals, or lab results.")
-            setLoading(false)
-            return
-          }
           
           const summary = {
             title: summaryResponse.data.title,
