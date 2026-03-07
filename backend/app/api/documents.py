@@ -51,6 +51,8 @@ class DocumentSummary(BaseModel):
     """Document summary with health indicators"""
     document_id: str
     title: str
+    report_type: str
+    report_description: str
     health_indicators: List[HealthIndicator]
     overall_score: str
     overall_color: str
