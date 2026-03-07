@@ -74,15 +74,17 @@ async def list_documents():
     Returns:
         DocumentListResponse with list of documents
     """
+    # For demo: return empty list since S3 is not configured
+    logger.info("📋 Listing documents (demo mode - returning empty list)")
+    return DocumentListResponse(documents=[], total=0)
+    
+    # Original code below is unreachable - commented out for demo
+    """
     try:
-        logger.info("📋 Listing documents (demo mode - returning empty list)")
+        logger.info("📋 Listing documents from S3")
         
-        # For demo: return empty list since S3 is not configured
-        return DocumentListResponse(documents=[], total=0)
-        
-        # Original code commented out for demo
         # List all files in documents/ prefix
-        # files = await s3_service.list_files(prefix="documents/")
+        files = await s3_service.list_files(prefix="documents/")
         
         documents = []
         for file_key in files:
