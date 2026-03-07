@@ -50,10 +50,10 @@ async def get_storage_stats():
     #     try:
     #         chromadb_svc = get_chromadb_service()
     #         collections = chromadb_svc.client.list_collections()
-            doc_collections = [c for c in collections if c.name.startswith('medical-docs-')]
-            doc_count = len(doc_collections)
-        except Exception as e:
-            logger.warning(f"Failed to get document count: {e}")
+    #         doc_collections = [c for c in collections if c.name.startswith('medical-docs-')]
+    #         doc_count = len(doc_collections)
+    #     except Exception as e:
+    #         logger.warning(f"Failed to get document count: {e}")
     
     # Calculate statistics
     documents_remaining = max(0, MAX_DOCUMENTS - doc_count)
