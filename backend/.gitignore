@@ -52,11 +52,12 @@ htmlcov/
 # AWS
 .aws/
 
-# Models (large files)
-models/
+# Models (large ML model files only, not app/models/ package)
 *.bin
 *.pt
 *.pth
+*.h5
+*.onnx
 
 # Data
 data/
