@@ -84,11 +84,23 @@ async def get_document_summary(document_id: str):
     """
     Generate AI summary of document with health indicators
     
-    Args:
-        document_id: Document ID to summarize
-        
-    Returns:
-        DocumentSummary with health indicators and key findings
+    For demo: Returns empty summary since document processing is disabled
+    """
+    # For demo: return empty summary
+    logger.info(f"📊 Summary requested for {document_id} (demo mode - returning empty)")
+    
+    return DocumentSummary(
+        document_id=document_id,
+        title="Demo Document",
+        health_indicators=[],
+        overall_score="N/A",
+        overall_color="gray",
+        key_findings=["Document processing disabled for demo"],
+        pages=0,
+        chunks=0
+    )
+    
+    # Original code below - unreachable
     """
     try:
         logger.info(
