@@ -4,6 +4,7 @@ TEMPORARY: Used as fallback while AWS Bedrock Marketplace subscription is pendin
 WARNING: This bypasses Bedrock security guarantees. Use only for demo/development.
 """
 
+import os
 import anthropic
 from typing import Optional
 from ..config import settings
