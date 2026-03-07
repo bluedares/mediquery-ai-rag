@@ -6,7 +6,8 @@ import time
 from .graph import AgentState
 from ..utils.tracing import tracer
 from ..utils.logger import logger
-from ..services import bedrock_service
+# Commented out for demo - AWS services not needed
+# from ..services import bedrock_service
 from ..config import settings
 
 # Import Claude direct API service (used when USE_DIRECT_ANTHROPIC=true)
