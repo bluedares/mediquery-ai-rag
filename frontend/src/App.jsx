@@ -1309,17 +1309,10 @@ function App() {
 
                             {item.citations && item.citations.length > 0 && (
                               <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
-                                <button
-                                  onClick={() => setExpandedCitations(prev => ({
-                                    ...prev,
-                                    [idx]: !prev[idx]
-                                  }))}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    fontSize: '12px',
-                                    fontWeight: '600',
+                              {uploadProgress && (
+                                <button 
+                                  disabled
+                                  className="px-8 py-3 bg-blue-500 text-white rounded-lg font-medium flex items-center gap-2 opacity-75 cursor-not-allowed"
                                     color: '#6b7280',
                                     background: 'none',
                                     border: 'none',
