@@ -214,40 +214,52 @@ async def get_document_summary(document_id: str):
                 pages_set.add(result['metadata']['page'])
         
         # Generate summary using Claude
-        prompt = f"""Analyze this medical report and extract all measurable health information.
+        prompt = f"""You are a medical report analyzer. Analyze this report and identify ALL abnormal test results.
 
 Medical Report:
 {full_text[:4000]}
 
-INSTRUCTIONS:
-1. Identify what type of medical report this is (blood test, imaging scan, pathology, etc.)
-2. Write a brief 1-2 sentence description of what this report evaluates
-3. Extract ALL measurable test results, findings, or metrics as health indicators:
-   - Include any numeric values with their test names
-   - Include percentages, measurements, counts, levels, scores, etc.
-   - Use the actual values from the report
-4. For each metric, determine status using reference ranges if provided in the report:
-   - Within normal range = "good" (green: #10b981)
-   - Borderline/slightly abnormal = "moderate" (yellow: #f59e0b)
-   - Abnormal/concerning = "needs attention" (red: #ef4444)
-   - If no reference range provided, use "moderate" (blue: #3b82f6)
-5. Extract 3-5 key findings, interpretations, or clinical notes from the report
-6. Set overall score based on the worst indicator status:
-   - If ANY indicator is "needs attention" (red) → overall_score: "Needs Attention", overall_color: "#ef4444"
-   - If ANY indicator is "moderate" (yellow) but none red → overall_score: "Moderate", overall_color: "#f59e0b"
-   - If ALL indicators are "good" (green) → overall_score: "Good", overall_color: "#10b981"
+CRITICAL INSTRUCTIONS - READ CAREFULLY:
 
-Return ONLY valid JSON (no markdown, no code blocks, no explanations):
+1. Identify the report type (blood test, imaging, pathology, etc.)
+
+2. Extract ALL test results with their values and reference ranges
+
+3. For EACH test result, you MUST:
+   a) Compare the actual value to the reference range provided in the report
+   b) Determine if it's LOW, HIGH, or NORMAL
+   c) Assign the correct status:
+      - If value is BELOW the lower limit of reference range → status: "needs attention", color: "#ef4444"
+      - If value is ABOVE the upper limit of reference range → status: "needs attention", color: "#ef4444"
+      - If value is at the edge of reference range (borderline) → status: "moderate", color: "#f59e0b"
+      - If value is within normal reference range → status: "good", color: "#10b981"
+
+4. IMPORTANT: Look for markers like "L" (Low) or "H" (High) next to values - these indicate abnormal results
+
+5. Extract key findings including any interpretations or recommendations from the report
+
+6. Calculate overall_score based on the WORST finding:
+   - If ANY test is "needs attention" (red) → overall_score: "Needs Attention", overall_color: "#ef4444"
+   - If ANY test is "moderate" (yellow) but none red → overall_score: "Moderate", overall_color: "#f59e0b"  
+   - ONLY if ALL tests are "good" (green) → overall_score: "Good", overall_color: "#10b981"
+
+EXAMPLE:
+If Hemoglobin is 12.5 g/dL and reference range is 13.0-17.0 g/dL:
+- This is LOW (below 13.0)
+- Status should be "needs attention", color "#ef4444"
+- Overall score should be "Needs Attention"
+
+Return ONLY valid JSON:
 
 {{
-    "report_type": "Type of medical report",
-    "report_description": "What this report evaluates",
+    "report_type": "Type of report",
+    "report_description": "Brief description",
     "health_indicators": [
-        {{"name": "Test/Metric Name", "value": 85, "status": "good", "color": "#10b981"}}
+        {{"name": "Test Name", "value": 12.5, "status": "needs attention", "color": "#ef4444"}}
     ],
-    "overall_score": "Good",
-    "overall_color": "#10b981",
-    "key_findings": ["Finding 1", "Finding 2", "Finding 3"]
+    "overall_score": "Needs Attention",
+    "overall_color": "#ef4444",
+    "key_findings": ["Finding 1", "Finding 2"]
 }}"""
 
         # Choose LLM service based on configuration
@@ -345,15 +357,27 @@ Return ONLY valid JSON (no markdown, no code blocks, no explanations):
                         if len(test_name) < 3 or test_name.lower() in ['page', 'ref', 'id', 'age', 'sex']:
                             continue
                         
-                        # Try to convert value to number
+                        # Try to convert value to number and detect abnormal markers
                         try:
+                            # Check for L (Low) or H (High) markers
+                            is_low = 'L' in test_value and test_value.index('L') < 3
+                            is_high = 'H' in test_value and test_value.index('H') < 3
+                            
                             value_num = float(test_value.replace('L', '').replace('H', '').strip())
                             if 0 < value_num < 1000:  # Reasonable range
+                                # Determine status based on L/H markers
+                                if is_low or is_high:
+                                    status = "needs attention"
+                                    color = "#ef4444"
+                                else:
+                                    status = "good"
+                                    color = "#10b981"
+                                
                                 health_indicators.append({
                                     "name": test_name[:30],  # Limit length
                                     "value": round(value_num, 1),
-                                    "status": "moderate",
-                                    "color": "#3b82f6"
+                                    "status": status,
+                                    "color": color
                                 })
                         except:
                             continue
