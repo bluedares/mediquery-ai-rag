@@ -858,99 +858,26 @@ function App() {
                     </div>
                   </div>
 
-                  {/* Critical Health Indicators Only */}
-                  {docSummary.healthIndicators && docSummary.healthIndicators.length > 0 ? (
+                  {/* Test Results Analysis - Display categorized text from multi-agent RAG */}
+                  {docSummary.keyPoints && docSummary.keyPoints.length > 0 && docSummary.keyPoints[0] ? (
                     <div style={{
-                      padding: '20px',
-                      background: '#f9fafb',
+                      padding: '24px',
+                      background: '#ffffff',
                       border: '1px solid #e5e7eb',
                       borderRadius: '8px',
                       marginBottom: '20px'
                     }}>
-                      <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>
-                        {docSummary.overallScore === 'Good' ? '✅' : '⚠️'} Health Indicators
-                      </h4>
-                      
-                      {/* Show ALL health indicators */}
-                      {docSummary.healthIndicators.length === 0 ? (
-                        <div style={{
-                          padding: '20px',
-                          textAlign: 'center',
-                          background: '#d1fae5',
-                          borderRadius: '6px'
-                        }}>
-                          <div style={{ fontSize: '32px', marginBottom: '8px' }}>✅</div>
-                          <div style={{ fontSize: '14px', fontWeight: '600', color: '#065f46' }}>
-                            All indicators within normal range
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-                          {docSummary.healthIndicators.map((indicator, i) => (
-                              <div key={i} style={{
-                                padding: '16px',
-                                background: 'white',
-                                border: `2px solid ${indicator.color}`,
-                                borderRadius: '8px'
-                              }}>
-                                <div style={{ fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
-                                  {indicator.name}
-                                </div>
-                                <div style={{ fontSize: '24px', fontWeight: '700', color: indicator.color, marginBottom: '4px' }}>
-                                  {indicator.value}%
-                                </div>
-                                <div style={{
-                                  fontSize: '11px',
-                                  fontWeight: '500',
-                                  color: indicator.color,
-                                  textTransform: 'uppercase',
-                                  marginBottom: '8px'
-                                }}>
-                                  {indicator.status}
-                                </div>
-                                <div style={{
-                                  fontSize: '11px',
-                                  color: '#6b7280',
-                                  lineHeight: '1.4',
-                                  marginTop: '8px',
-                                  paddingTop: '8px',
-                                  borderTop: '1px solid #e5e7eb'
-                                }}>
-                                  {indicator.status === 'moderate' ? 
-                                    'Outside optimal range. Consider lifestyle changes or consult your doctor.' :
-                                    'Requires attention. Please discuss with your healthcare provider.'}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div style={{
-                      padding: '24px', textAlign: 'center',
-                      background: '#fef3c7', border: '1px solid #fbbf24',
-                      borderRadius: '8px'
-                    }}>
-                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>📋</div>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#92400e', marginBottom: '4px' }}>
-                        No Health Metrics Found
+                      <div style={{
+                        fontSize: '14px',
+                        lineHeight: '1.8',
+                        color: '#374151',
+                        whiteSpace: 'pre-wrap',
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      }}>
+                        {docSummary.keyPoints[0]}
                       </div>
-                      <div style={{ fontSize: '13px', color: '#78350f' }}>
-                        This document doesn't contain standard health indicators like blood pressure, glucose, cholesterol, etc.
-                      </div>
-                      {docSummary.overallScore && (
-                        <div style={{
-                          marginTop: '12px', padding: '12px',
-                          background: 'white', borderRadius: '6px'
-                        }}>
-                          <span style={{ fontSize: '13px', color: '#6b7280' }}>Document Status: </span>
-                          <span style={{ fontSize: '16px', fontWeight: '600', color: docSummary.overallColor }}>
-                            {docSummary.overallScore}
-                          </span>
-                        </div>
-                      )}
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Key Findings - Compact */}
                   {docSummary.keyPoints && docSummary.keyPoints.length > 0 && (
