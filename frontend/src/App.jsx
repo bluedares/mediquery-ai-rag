@@ -461,22 +461,24 @@ function App() {
                   id="file-upload"
                 />
 
-                <label
-                  htmlFor="file-upload"
-                  className="mobile-text-sm"
-                  style={{
-                    display: 'inline-block',
-                    padding: '12px 32px',
-                    background: loading ? '#9ca3af' : '#0284c7',
-                    color: 'white',
-                    borderRadius: '8px',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    fontSize: '16px',
-                    fontWeight: '500'
-                  }}
-                >
-                  {loading ? '⏳ Processing...' : '📤 Choose PDF File'}
-                </label>
+                {!loading && (
+                  <label
+                    htmlFor="file-upload"
+                    className="mobile-text-sm"
+                    style={{
+                      display: 'inline-block',
+                      padding: '12px 32px',
+                      background: '#0284c7',
+                      color: 'white',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    📤 Choose PDF File
+                  </label>
+                )}
 
                 {/* Large Circular Loading Spinner */}
                 {loading && (
