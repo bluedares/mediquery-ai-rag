@@ -214,38 +214,39 @@ async def get_document_summary(document_id: str):
                 pages_set.add(result['metadata']['page'])
         
         # Generate summary using Claude
-        prompt = f"""Analyze this medical report and extract health information.
+        prompt = f"""Extract ALL test results from this medical report.
 
 Medical Report:
 {full_text[:4000]}
 
-Instructions:
-1. Identify the report type (blood test, imaging, pathology, etc.)
-2. Extract ALL test results with their ACTUAL values from the report above
-3. For each test, compare value to reference range if provided:
-   - Below range or marked "L" = "needs attention" (red: #ef4444)
-   - Above range or marked "H" = "needs attention" (red: #ef4444)
-   - Borderline = "moderate" (yellow: #f59e0b)
-   - Within range = "good" (green: #10b981)
-4. Extract key findings from the report
-5. Set overall_score based on worst indicator:
-   - Any red → "Needs Attention" (#ef4444)
-   - Any yellow but no red → "Moderate" (#f59e0b)
-   - All green → "Good" (#10b981)
+Task:
+1. Find EVERY test result with a numeric value in the report
+2. For EACH test, create an entry with:
+   - name: the test name
+   - value: the numeric result
+   - status and color based on:
+     * If marked "L" or below reference range → "needs attention", "#ef4444"
+     * If marked "H" or above reference range → "needs attention", "#ef4444"
+     * If borderline → "moderate", "#f59e0b"
+     * If normal → "good", "#10b981"
 
-IMPORTANT: Use ACTUAL data from the report above. Do NOT use example values.
+3. Set overall_score:
+   - If ANY test has red status → "Needs Attention", "#ef4444"
+   - If ANY test has yellow status → "Moderate", "#f59e0b"
+   - If ALL tests are green → "Good", "#10b981"
 
-Return ONLY valid JSON in this format:
+Return valid JSON with ALL test results found:
 
 {{
-    "report_type": "<actual report type>",
-    "report_description": "<what this report evaluates>",
+    "report_type": "Blood Test",
+    "report_description": "Complete blood count",
     "health_indicators": [
-        {{"name": "<actual test name>", "value": <actual numeric value>, "status": "<actual status>", "color": "<actual color>"}}
+        {{"name": "Hemoglobin", "value": 12.5, "status": "needs attention", "color": "#ef4444"}},
+        {{"name": "WBC", "value": 8000, "status": "good", "color": "#10b981"}}
     ],
-    "overall_score": "<actual score>",
-    "overall_color": "<actual color>",
-    "key_findings": ["<actual finding 1>", "<actual finding 2>"]
+    "overall_score": "Needs Attention",
+    "overall_color": "#ef4444",
+    "key_findings": ["Low hemoglobin", "Normal WBC"]
 }}"""
 
         # Choose LLM service based on configuration
@@ -307,7 +308,13 @@ Return ONLY valid JSON in this format:
             logger.debug(f"Extracted JSON: {response_text[:200]}...")
             
             summary_data = json.loads(response_text)
-            logger.info(f"✅ Successfully parsed LLM response with {len(summary_data.get('health_indicators', []))} indicators")
+            indicators_count = len(summary_data.get('health_indicators', []))
+            logger.info(f"✅ Successfully parsed LLM response with {indicators_count} indicators")
+            
+            # If LLM returned empty indicators, treat as parsing failure and use fallback
+            if indicators_count == 0:
+                logger.warning("LLM returned empty health_indicators array, using fallback extraction")
+                raise ValueError("Empty health_indicators from LLM")
         except Exception as e:
             logger.warning(f"Failed to parse LLM response: {e}")
             logger.warning(f"Response was: {response[:500]}")
