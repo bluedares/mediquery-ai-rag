@@ -8,8 +8,7 @@ from datetime import datetime
 import re
 
 from ..models.responses import BaseModel
-# Commented out for demo - AWS services not needed
-# from ..services import opensearch_service, s3_service, bedrock_service
+from ..services import opensearch_service, s3_service, bedrock_service
 from ..config import settings
 from ..utils.logger import logger
 
