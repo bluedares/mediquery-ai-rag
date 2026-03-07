@@ -77,11 +77,6 @@ async def list_documents():
     # For demo: return empty list since S3 is not configured
     logger.info("📋 Listing documents (demo mode - returning empty list)")
     return DocumentListResponse(documents=[], total=0)
-    
-    # Original code below is unreachable - commented out for demo
-    """
-    try:
-        logger.info("📋 Listing documents from S3")
         
         # List all files in documents/ prefix
         files = await s3_service.list_files(prefix="documents/")
@@ -138,24 +133,6 @@ async def list_documents():
                     pages=pages_count,
                     chunks=chunks_count
                 ))
-        
-        logger.info(f"✅ Found {len(documents)} documents")
-        
-        return DocumentListResponse(
-            documents=documents,
-            total=len(documents)
-        )
-        
-    except Exception as e:
-        logger.error(
-            "❌ Failed to list documents",
-            error=str(e),
-            exc_info=True
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list documents: {str(e)}"
-        )
 
 
 @router.get("/documents/{document_id}/summary", response_model=DocumentSummary)
