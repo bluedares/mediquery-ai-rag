@@ -502,7 +502,7 @@ function App() {
                       fontWeight: '600',
                       color: '#1e40af'
                     }}>
-                      Processing your document...
+                      Processing your report...
                     </div>
                   </div>
                 )}
