@@ -77,62 +77,6 @@ async def list_documents():
     # For demo: return empty list since S3 is not configured
     logger.info("📋 Listing documents (demo mode - returning empty list)")
     return DocumentListResponse(documents=[], total=0)
-        
-        # List all files in documents/ prefix
-        files = await s3_service.list_files(prefix="documents/")
-        
-        documents = []
-        for file_key in files:
-            # Extract document ID from key: documents/doc_abc123.pdf
-            match = re.search(r'documents/(doc_[a-f0-9]+)\.pdf', file_key)
-            if match:
-                doc_id = match.group(1)
-                filename = file_key.split('/')[-1]  # Get filename from key
-                
-                # Get metadata from OpenSearch (count chunks and pages)
-                try:
-                    from ..services import embedding_service
-                    dummy_embedding = await embedding_service.encode_single("document")
-                    
-                    # Choose vector database based on configuration
-                    if settings.use_chromadb:
-                        if chromadb_available:
-                            chromadb_svc = get_chromadb_service()
-                            search_results = await chromadb_svc.hybrid_search(
-                                collection_name=f"medical-docs-{doc_id}",
-                                query_text="document",
-                                query_embedding=dummy_embedding,
-                                top_k=1000
-                            )
-                        else:
-                            search_results = []
-                    else:
-                        search_results = await opensearch_service.hybrid_search(
-                            index_name=f"medical-docs-{doc_id}",
-                            query_text="document",
-                            query_embedding=dummy_embedding,
-                            top_k=1000
-                        )
-                    
-                    chunks_count = len(search_results)
-                    pages_set = set()
-                    for result in search_results:
-                        if 'metadata' in result and 'page' in result['metadata']:
-                            pages_set.add(result['metadata']['page'])
-                    pages_count = len(pages_set)
-                except Exception as e:
-                    logger.warning(f"Failed to get metadata for {doc_id}: {e}")
-                    chunks_count = 0
-                    pages_count = 0
-                
-                documents.append(DocumentInfo(
-                    document_id=doc_id,
-                    filename=filename,
-                    s3_key=file_key,
-                    uploaded_at=datetime.now().isoformat(),
-                    pages=pages_count,
-                    chunks=chunks_count
-                ))
 
 
 @router.get("/documents/{document_id}/summary", response_model=DocumentSummary)
