@@ -478,6 +478,33 @@ function App() {
                   {loading ? '⏳ Processing...' : '📤 Choose PDF File'}
                 </label>
 
+                {/* Large Circular Loading Spinner */}
+                {loading && (
+                  <div style={{
+                    marginTop: '32px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '20px'
+                  }}>
+                    <div style={{
+                      width: '80px',
+                      height: '80px',
+                      border: '6px solid #e5e7eb',
+                      borderTop: '6px solid #3b82f6',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    <div style={{
+                      fontSize: '18px',
+                      fontWeight: '600',
+                      color: '#1e40af'
+                    }}>
+                      Processing your document...
+                    </div>
+                  </div>
+                )}
+
                 {/* Upload Progress Stages */}
                 {uploadProgress && (
                   <div style={{
