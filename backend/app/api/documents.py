@@ -214,33 +214,36 @@ async def get_document_summary(document_id: str):
                 pages_set.add(result['metadata']['page'])
         
         # Generate summary using Claude
-        prompt = f"""Analyze this medical report and extract ONLY the health metrics that are actually present in the document.
+        prompt = f"""Analyze this medical/lab report and extract health information.
 
 Medical Report:
 {full_text[:4000]}
 
-IMPORTANT INSTRUCTIONS:
-1. Identify the report type (e.g., "Blood Test Report", "Complete Blood Count", "Lipid Panel", "Diabetes Screening", "Cancer Marker Test", "Thyroid Function Test", etc.)
-2. Provide a brief 1-2 sentence description of what this report is about
-3. Extract ONLY health metrics that are explicitly mentioned in the report (e.g., Blood Glucose, Cholesterol, Blood Pressure, Heart Rate, BMI, etc.)
-4. Do NOT include metrics that are not in the report
-5. Calculate a score (0-100) based on the actual values in the report:
-   - 80-100 = good (green: #10b981)
-   - 50-79 = moderate (yellow: #f59e0b)
-   - 0-49 = needs attention (red: #ef4444)
-6. Extract 3-5 key findings from the report
+INSTRUCTIONS:
+1. Identify report type (e.g., "HB Electrophoresis", "Complete Blood Count", "Lipid Panel", "Thyroid Test", etc.)
+2. Brief 1-2 sentence description
+3. Extract test results as health indicators:
+   - For percentage values (like Hb A 84.4%): use the percentage as value
+   - For numeric results: use the actual number
+   - For each metric, determine status based on reference ranges if provided
+4. If reference ranges are in the report, use them to determine status:
+   - Within range = "good" (green: #10b981)
+   - Slightly outside = "moderate" (yellow: #f59e0b)
+   - Significantly outside = "needs attention" (red: #ef4444)
+5. Extract 3-5 key findings including test interpretations if present
+6. Overall score should reflect the general health status from the report
 
-Return ONLY valid JSON, no other text:
+Return ONLY valid JSON (no markdown, no code blocks):
 
 {{
-    "report_type": "Blood Test Report",
-    "report_description": "Complete blood count and metabolic panel showing overall health status",
+    "report_type": "Test Type",
+    "report_description": "Brief description of what this test measures",
     "health_indicators": [
-        {{"name": "Metric Name", "value": 85, "status": "good", "color": "#10b981"}}
+        {{"name": "Test Name", "value": 85, "status": "good", "color": "#10b981"}}
     ],
     "overall_score": "Good",
     "overall_color": "#10b981",
-    "key_findings": ["Finding from report", "Another finding", "Third finding"]
+    "key_findings": ["Finding 1", "Finding 2", "Finding 3"]
 }}"""
 
         # Choose LLM service based on configuration
@@ -307,49 +310,78 @@ Return ONLY valid JSON, no other text:
             logger.warning(f"Failed to parse LLM response: {e}")
             logger.warning(f"Response was: {response[:500]}")
             
-            # Extract basic findings from document text as fallback
+            # Extract test results from document text as fallback
             import re
             key_findings = []
-            for result in search_results[:10]:  # Check more chunks to find good content
+            health_indicators = []
+            
+            # Try to extract test results (name: value pattern)
+            for result in search_results[:20]:
                 text = result.get('text', '').strip()
-                if not text or len(text) < 40:  # Need substantial text
+                if not text:
                     continue
                 
-                # Clean and validate text
-                # Remove non-printable characters and excessive whitespace
-                text = re.sub(r'[^\x20-\x7E\n]', '', text)  # Keep only printable ASCII
-                text = re.sub(r'\s+', ' ', text).strip()
+                # Look for test result patterns like "Hb A: 84.4" or "Hemoglobin 12.5 g/dL"
+                test_patterns = [
+                    r'([A-Za-z][A-Za-z0-9\s]+?)\s*[:=]\s*([LH]?\s*[\d.]+)\s*(%|g/dL|mg/dL|mmol/L|U/L|cells/cumm)?',
+                    r'([A-Za-z][A-Za-z0-9\s]+?)\s+([\d.]+)\s*(%|g/dL|mg/dL|mmol/L|U/L|cells/cumm)',
+                ]
                 
-                # Skip if mostly numbers/symbols or looks like metadata
-                if len(re.findall(r'[a-zA-Z]', text)) < len(text) * 0.5:  # Less than 50% letters
-                    continue
-                if re.match(r'^(Page \d+|Sample|PID|Sex|Age|Ref)', text):
-                    continue
+                for pattern in test_patterns:
+                    matches = re.finditer(pattern, text, re.IGNORECASE)
+                    for match in matches:
+                        test_name = match.group(1).strip()
+                        test_value = match.group(2).strip()
+                        
+                        # Skip if test name is too short or looks like metadata
+                        if len(test_name) < 3 or test_name.lower() in ['page', 'ref', 'id', 'age', 'sex']:
+                            continue
+                        
+                        # Try to convert value to number
+                        try:
+                            value_num = float(test_value.replace('L', '').replace('H', '').strip())
+                            if 0 < value_num < 1000:  # Reasonable range
+                                health_indicators.append({
+                                    "name": test_name[:30],  # Limit length
+                                    "value": round(value_num, 1),
+                                    "status": "moderate",
+                                    "color": "#3b82f6"
+                                })
+                        except:
+                            continue
                 
-                # Extract first meaningful sentence
-                sentences = text.split('. ')
+                # Extract meaningful sentences for key findings
+                sentences = text.split('.')
                 for sentence in sentences:
                     sentence = sentence.strip()
-                    if len(sentence) >= 40 and len(sentence) <= 200:  # Good length
-                        # Check if it's a meaningful sentence (has verbs/content words)
-                        if re.search(r'\b(is|are|was|were|has|have|shows|indicates|level|count|result)\b', sentence, re.I):
+                    if 40 <= len(sentence) <= 200:
+                        if re.search(r'\b(test|result|level|count|shows|indicates|negative|positive|normal|abnormal)\b', sentence, re.I):
                             if sentence not in key_findings:
                                 key_findings.append(sentence)
-                                break
                 
-                if len(key_findings) >= 4:
+                if len(health_indicators) >= 5 and len(key_findings) >= 3:
                     break
+            
+            # Remove duplicates from health indicators
+            seen_names = set()
+            unique_indicators = []
+            for ind in health_indicators:
+                if ind['name'] not in seen_names:
+                    seen_names.add(ind['name'])
+                    unique_indicators.append(ind)
             
             # If still no findings, use generic message
             if not key_findings:
-                key_findings = ["Document uploaded successfully - use Q&A to ask specific questions about your report"]
+                key_findings = ["Medical report uploaded successfully", "Use Q&A below to ask specific questions about your test results"]
             
-            # Fallback summary - NO fake health indicators, just show we have the document
+            # Fallback summary with extracted data
             summary_data = {
-                "health_indicators": [],  # Don't show fake metrics
+                "report_type": "Medical Test Report",
+                "report_description": "Laboratory test results and medical analysis",
+                "health_indicators": unique_indicators[:10],  # Limit to 10
                 "overall_score": "Analysis Available",
                 "overall_color": "#3b82f6",
-                "key_findings": key_findings
+                "key_findings": key_findings[:5]  # Limit to 5
             }
         
         # Build response
